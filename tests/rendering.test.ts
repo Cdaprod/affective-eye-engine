@@ -42,4 +42,6 @@ test('canonical shader covers all emote and proximity signals',()=>{
  assert.ok(shader.includes('/* __SDF__ */'));
  assert.ok(shader.includes('/* __DEFORMATION__ */'));
  assert.ok(shader.includes('/* __LIGHTING__ */'));
+ assert.ok(shader.includes('sqrt(max(.12,1.0-radial*.44))'));
+ assert.ok(!shader.includes('normalize(vec2(surface'));
 });

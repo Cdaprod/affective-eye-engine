@@ -62,8 +62,11 @@ void main(){
   float coverage=1.0-smoothstep(-edge,edge,d);
   // Internal simulated surface normal and broad, orientation-driven key light.
   vec2 surface=clamp(local/max(halfSize,vec2(1.0)),-1.0,1.0);
-  vec2 key=normalize(vec2(-.45+uOrientation.x*.25,.65-uOrientation.y*.25));
-  float light=saturate(dot(normalize(vec2(surface.x*.6,surface.y*.65)+vec2(.001)),key)*.5+.5);
+  // A smooth hemisphere normal eliminates the point singularity at the eye center.
+  float radial=dot(surface,surface);
+  vec3 normal=normalize(vec3(surface.x*.68,surface.y*.68,sqrt(max(.12,1.0-radial*.44))));
+  vec3 keyDir=normalize(vec3(-.45+uOrientation.x*.22,.64-uOrientation.y*.22,1.0));
+  float light=saturate(dot(normal,keyDir)*.72+.24);
   float highlight=pow(saturate(1.0-length(surface-vec2(-.36,.43))/.80),2.2);
   float rim=pow(saturate(length(surface)*.84),2.5);
   vec3 luminous=mix(vec3(.025,.35,.52),vec3(.49,.95,1.0),.36+.52*light)+vec3(.65,.82,.9)*highlight*.52;
