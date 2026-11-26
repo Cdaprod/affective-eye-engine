@@ -19,14 +19,10 @@ uniform float uBloom;
 uniform float uMaterial;
 
 float saturate(float x) {return clamp(x,0.0,1.0);}
-float sdRoundBox(vec2 p,vec2 b,float r) {
- vec2 q=abs(p)-b+vec2(r);
- return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;
-}
+/* __SDF__ */
 vec2 rotate2d(vec2 v,float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c)*v;}
-vec3 filmic(vec3 c) {
- return clamp((c*(2.51*c+0.03))/(c*(2.43*c+0.59)+0.14),0.0,1.0);
-}
+/* __LIGHTING__ */
+/* __DEFORMATION__ */
 void main(){
  vec2 res=max(uResolution,vec2(1.0));
  vec2 pixel=(vUv-.5)*res;
@@ -48,8 +44,7 @@ void main(){
   float tilt=radians((side*min(0.0,uValence)*18.0+uTilt));
   local=rotate2d(local,-tilt);
   float stretch=saturate(uStretch);
-  local.x/=1.0+stretch;
-  local.y/=max(.55,1.0-.38*stretch);
+  local=deform(local,stretch);
   vec2 halfSize=vec2(width,height);
   float d=sdRoundBox(local,halfSize,min(width*.58,height*.56));
   float across=clamp(local.x/max(width,1.0),-1.0,1.0);

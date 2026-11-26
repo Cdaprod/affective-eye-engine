@@ -4,7 +4,14 @@ import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import vertexShader from './shaders/eye.vert.glsl?raw';
-import fragmentShader from './shaders/eye.frag.glsl?raw';
+import fragmentTemplate from './shaders/eye.frag.glsl?raw';
+import sdf from './shaders/sdf.glsl?raw';
+import lighting from './shaders/lighting.glsl?raw';
+import deformation from './shaders/deformation.glsl?raw';
+const fragmentShader=fragmentTemplate
+ .replace('/* __SDF__ */',sdf)
+ .replace('/* __LIGHTING__ */',lighting)
+ .replace('/* __DEFORMATION__ */',deformation);
 import type {Quality,EyeMaterial,RenderFrame} from './types';
 import {qualityProfiles} from './profiles';
 
