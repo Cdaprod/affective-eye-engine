@@ -40,8 +40,9 @@ void main(){
   float horizontal=min(res.x*.115,max(0.0,(res.x*.5-(res.x*.205+width*1.1)))/1.12);
   float vertical=min(res.y*.17,max(0.0,(res.y*.5-height*1.15)/1.12));
   vec2 center=vec2(side*res.x*.205+uGaze.x*horizontal,-uGaze.y*vertical+uBounce*res.y/300.0);
-  vec2 local=pixel-center;
-  float tilt=radians((side*min(0.0,uValence)*18.0+uTilt));
+  vec2 pivot=vec2(uGaze.x*horizontal,-uGaze.y*vertical+uBounce*res.y/300.0);
+  vec2 local=rotate2d(pixel-pivot,-radians(uTilt))-(center-pivot);
+  float tilt=radians((side*min(0.0,uValence)*18.0));
   local=rotate2d(local,-tilt);
   float stretch=saturate(uStretch);
   local=deform(local,stretch);
