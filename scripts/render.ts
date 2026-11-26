@@ -1,0 +1,2 @@
+import {mkdirSync,writeFileSync} from 'node:fs';import {eyeSVG,presets} from '../src/core.ts';
+mkdirSync('artifacts/previews',{recursive:true});const manifest=[];for(const [name,p] of Object.entries(presets)){const parameters={...p,x:0,y:0,blink:0};const file=`artifacts/previews/${name}.svg`;writeFileSync(file,eyeSVG(parameters));manifest.push({name,file,parameters})}writeFileSync('artifacts/manifest.json',JSON.stringify({version:1,entries:manifest},null,2));

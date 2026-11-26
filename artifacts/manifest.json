@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "name": "neutral",
+      "file": "artifacts/previews/neutral.svg",
+      "parameters": {
+        "valence": 0,
+        "arousal": 0,
+        "asymmetry": 0,
+        "x": 0,
+        "y": 0,
+        "blink": 0
+      }
+    },
+    {
+      "name": "happy",
+      "file": "artifacts/previews/happy.svg",
+      "parameters": {
+        "valence": 1,
+        "arousal": 0.3,
+        "asymmetry": 0,
+        "x": 0,
+        "y": 0,
+        "blink": 0
+      }
+    },
+    {
+      "name": "curious",
+      "file": "artifacts/previews/curious.svg",
+      "parameters": {
+        "valence": 0.2,
+        "arousal": 0.5,
+        "asymmetry": 0.35,
+        "x": 0,
+        "y": 0,
+        "blink": 0
+      }
+    },
+    {
+      "name": "focused",
+      "file": "artifacts/previews/focused.svg",
+      "parameters": {
+        "valence": -0.45,
+        "arousal": 0.1,
+        "asymmetry": 0,
+        "x": 0,
+        "y": 0,
+        "blink": 0
+      }
+    },
+    {
+      "name": "sleepy",
+      "file": "artifacts/previews/sleepy.svg",
+      "parameters": {
+        "valence": 0,
+        "arousal": -0.9,
+        "asymmetry": 0,
+        "x": 0,
+        "y": 0,
+        "blink": 0
+      }
+    },
+    {
+      "name": "surprised",
+      "file": "artifacts/previews/surprised.svg",
+      "parameters": {
+        "valence": 0.2,
+        "arousal": 1,
+        "asymmetry": 0,
+        "x": 0,
+        "y": 0,
+        "blink": 0
+      }
+    }
+  ]
+}
