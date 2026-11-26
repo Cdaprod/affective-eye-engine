@@ -9,8 +9,8 @@ export class AnimationCompositor {
   const dt=clamp(input.dt,0,.1);
   const speed=Math.hypot(input.velocityX,input.velocityY);
   const desired=clamp(speed*.035,0,.22);
-  if(!this.initialized){this.stretch=desired;this.initialized=true}
-  else this.stretch=smooth(this.stretch,desired,dt,11);
+  if(!this.initialized){this.stretch=0;this.initialized=true}
+  this.stretch=smooth(this.stretch,desired,dt,11);
   const breath=1+.012*Math.sin(input.time*.95);
   this.pulse=smooth(this.pulse,.035*Math.sin(input.time*.65)+.035,dt,2);
   return {
