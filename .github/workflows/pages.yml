@@ -1,4 +1,4 @@
-name: Validate and deploy
+name: Validate, render, and deploy
 on:
   push:
     branches: [main]
@@ -8,32 +8,51 @@ permissions:
   contents: read
   pages: write
   id-token: write
+concurrency:
+  group: eye-engine-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - run: npm install
-      - run: npm test
-      - run: npm run render
-      - run: npm run build
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate behavior
+        run: npm test
+      - name: Render deterministic assets
+        run: npm run render
+      - name: Build multi-page inspector
+        run: npm run build
+      - name: Verify published HTML and generated assets
+        run: |
+          test -s dist/index.html
+          test -s dist/gallery.html
+          test -s artifacts/contact-sheet.svg
+          test -s artifacts/animations/attention-switch.svg
+          mkdir -p dist/artifacts
+          cp -R artifacts/. dist/artifacts/
+          test -s dist/artifacts/animations/attention-switch.svg
       - uses: actions/upload-artifact@v4
         with:
-          name: eye-previews
+          name: eye-preview-artifacts
           path: artifacts/
+          retention-days: 30
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: validate
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/deploy-pages@v4
+      - name: Deploy (requires Settings → Pages → GitHub Actions)
+        uses: actions/deploy-pages@v4
         id: deployment
