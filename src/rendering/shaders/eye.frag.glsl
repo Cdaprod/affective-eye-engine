@@ -49,10 +49,11 @@ void main(){
   vec2 halfSize=vec2(width,height);
   float d=sdRoundBox(local,halfSize,min(width*.58,height*.56));
   float across=clamp(local.x/max(width,1.0),-1.0,1.0);
-  float arc=(1.0-across*across)*height*.44;
-  float arcWidth=max(1.2,height*.24);
+  float arch=max(0.0,1.0-across*across);
+  float arc=height*(.40*arch-.10);
+  float arcWidth=max(.5,height*.15*arch);
   float smile=max(abs(local.y-arc)-arcWidth,abs(local.x)-width);
-  float happiness=smoothstep(.35,.88,uValence);
+  float happiness=smoothstep(.35,.88,uValence)*smoothstep(.15,.65,openness);
   d=mix(d,smile,happiness);
   // Screen-space analytical bloom: single pass on low-powered devices.
   float bloomRadius=max(2.0,min(res.x,res.y)*.075);
