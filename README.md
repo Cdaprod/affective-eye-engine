@@ -6,9 +6,21 @@ Hardware-agnostic, procedural eyes driven by local face detection, anonymous att
 
 ![Expressions](artifacts/previews/neutral.svg) ![Curious](artifacts/previews/curious.svg)
 
-## Integrated behavior baseline — V007
+## Integrated behavior baseline — V008
 
 All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, adaptive tracking, native camera constraints and minimum zoom where available, peripheral memory, proximity scale (0.65–1.4), autonomous contextual emotes, orientation, simulation and SVG snapshots. The gallery now includes generated gaze, proximity and six emote animations. Disable autonomous emotes to isolate gaze and proximity during testing.
+
+## Cinematic rendering — V008
+
+The immersive V007 viewport now defaults to a real Three.js WebGL shader renderer. Two signed-distance-field eye shapes are shaded with procedural lighting, responsive glints, material gradients, filmic color mapping, analytical bloom, velocity-driven squash/stretch, subtle breathing and temporal expression morphs. No external 3D models or camera texture uploads are needed.
+
+Tap anywhere to open the inspector overlay. Renderer modes: **Cinematic (WebGL)**, **Ultra (WebGL + UnrealBloomPass/OutputPass when quality is High)**, and **Classic (SVG)**. Choose Lightweight/Balanced/High performance profiles, luminous/glass materials, emission and bloom intensity. WebGL context loss or initialization failure falls back to the existing SVG geometry. The renderer reads the *same* state pipeline for gaze, face proximity, blink, emotes, and orientation; it never independently calls camera APIs.
+
+**Important:** selecting Ultra with Balanced quality uses analytical bloom only until High quality is chosen. On iOS, browsers may limit fullscreen APIs, WebGL capability, screen refresh rate, and camera FOV. Visual quality and 60 FPS are targets, not guarantees.
+
+### Cinematic browser captures
+
+After `npm install && npm run build`, run `npx playwright install chromium` then `npm run render:cinematic`. This launches a local Vite preview, captures **actual** WebGL screenshots of cinematic and glass materials, plus portrait and SVG fallback, and writes `artifacts/cinematic/*.png`. GitHub Actions runs the capture on the pull-request validation path. This is a browser render, not a programmatic SVG imitation.
 
 ## Quick start
 
@@ -56,7 +68,8 @@ The workflow validates pull requests without deploying. Pushes to `main` validat
 ## Architecture & privacy
 
 - `src/core.ts`: pure deterministic geometry, expressions, smoothing, anonymous centroid tracking and attention.
-- `src/main.ts`: client-side MediaPipe inference, device sensors, interaction and live renderer.
+- `src/main.ts`: client-side MediaPipe inference, device sensors and interaction, feeding both renderers.
+- `src/rendering/`: typed rendering contract, perceptual compositor, Three.js shader renderer, geometry-preserving SVG fallback, quality profiles and shader sources.
 - `scripts/render.ts`: static, contact-sheet and animated SVG generators.
 - `tests/`: headless behavior tests.
 

@@ -38,6 +38,7 @@ void main(){
   float side=i==0?-1.0:1.0;
   float width=min(res.x*.087,res.y*.26)*uProximity;
   float height=min(res.y*.17,res.x*.15)*uProximity*(1.0+.45*uArousal);
+  if(i==1)height*=1.0-saturate(uAsymmetry)*.72;
   float openness=1.0-saturate(max(uBlink,i==1?uWink:0.0))*.985;
   height=max(height*openness,1.1);
   float horizontal=min(res.x*.115,max(0.0,(res.x*.5-(res.x*.205+width*1.1)))/1.12);
