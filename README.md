@@ -34,9 +34,9 @@ All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, 
 
 - Visual intention: confirmed visual acquisition, remembered targets, searching, settling and resting; gaze and proximity use separate smoothing.
 - Acoustic perception: optional local microphone, stereo RMS balance where two channels are exposed, mono fallback, acoustic activity and visual target association.
-- Listening gestures: shared facial pivot, 100 ms onset confirmation on the smoothed acoustic envelope, bounded 9° curiosity target settling toward 4°, latched tilt direction, 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
+- Listening gestures: shared facial pivot, 100 ms onset confirmation on the smoothed acoustic envelope, alternating 10° curiosity pulses (120 ms attack, 60 ms hold, 260 ms return, at least 1.9 s between onsets), 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
 
-Audio activity is a heuristic, not speech classification or calibrated direction of arrival. Sustained noise may maintain a listening pose; voice activity detection and conversational acknowledgments are future work.
+Audio activity is a heuristic, not speech classification or calibrated direction of arrival. Sustained noise may trigger periodic listening gestures; voice activity detection and conversational acknowledgments are future work.
 
 ```mermaid
 flowchart TD
@@ -134,4 +134,4 @@ New group attention arbitration acknowledges visible people in quiet intervals, 
 
 `main` is the latest integrated source. GitHub Pages serves the latest successful main deployment. Feature names are descriptive, not numbered versions. `package.json` owns the SemVer release number; release tags must match `v<package version>`. Individual builds are identified by their Git commit SHA. The inspector and gallery expose package version and build SHA; CI publishes `build-info.json`. Do not bump package versions for every feature. For an intentional release, validate main, run `npm version patch` (or `minor`/`major` as appropriate), then push main and the resulting tag. The tag workflow validates the tagged commit and creates a GitHub Release with generated notes and a built site archive. The package remains private; no npm registry publishing is configured.
 
-Audio responsiveness uses a fast attack (18/s acoustic envelope, 100 ms listening confirmation, 10/s gesture attack) and slow release; group speaker handoffs require 220 ms candidate confirmation and 750 ms minimum focus. These are tuning parameters, not measured device latency.
+Audio responsiveness uses a fast attack (18/s acoustic envelope, 100 ms listening confirmation, 120 ms procedural tilt attack) and slow release; group speaker handoffs require 220 ms candidate confirmation and 750 ms minimum focus. These are tuning parameters, not measured device latency.

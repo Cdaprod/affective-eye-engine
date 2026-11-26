@@ -1,13 +1,5 @@
-import {test} from 'node:test';
-import assert from 'node:assert/strict';
-import {ListeningGesture} from '../src/listening.ts';
-test('continuous sound holds a bounded tilt without repeated onset',()=>{
- const g=new ListeningGesture();let p=g.update({activity:1,pan:-.8,directional:true},0,.016);
- for(let t=16;t<60000;t+=16)p=g.update({activity:1,pan:t<1000?-.8:.8,directional:true},t,.016);
- assert.ok(p.active);assert.ok(p.tilt< -3.9&&p.tilt> -4.1);
- for(let t=60000;t<67000;t+=16)p=g.update({activity:0,pan:0,directional:false},t,.016);
- assert.ok(!p.active);assert.ok(Math.abs(p.tilt)<.05);
-});
-test('brief noise does not initiate listening',()=>{const g=new ListeningGesture();g.update({activity:1,pan:0,directional:false},0,.016);assert.equal(g.update({activity:0,pan:0,directional:false},100,.016).active,false)});
-
-test('sustained acoustic onset produces visible tilt within 200ms',()=>{const g=new ListeningGesture();let p=g.update({activity:1,pan:0,directional:false},0,.016);for(let n=16;n<=192;n+=16)p=g.update({activity:1,pan:0,directional:false},n,.016);assert.ok(p.active);assert.ok(p.tilt>4);});
+import {test} from 'node:test';import assert from 'node:assert/strict';import {ListeningGesture} from '../src/listening.ts';
+const sound={activity:1,pan:0,directional:false},quiet={...sound,activity:0};
+test('quick alternating gestures return to center between pulses',()=>{const g=new ListeningGesture();g.update(sound,0,.016);g.update(sound,100,.016);assert.ok(g.update(sound,200,.016).tilt>8);assert.equal(g.update(sound,540,.016).tilt,0);g.update(sound,2000,.016);assert.ok(g.update(sound,2120,.016).tilt< -9);assert.equal(g.update(sound,2440,.016).tilt,0);});
+test('continuous exposure stays bounded and pauses do not start new gestures',()=>{const g=new ListeningGesture();let p=g.update(sound,0,.016);for(let n=16;n<60000;n+=16){p=g.update(sound,n,.016);assert.ok(Math.abs(p.tilt)<=10)}for(let n=60000;n<63000;n+=16)p=g.update(quiet,n,.016);assert.equal(p.active,false);assert.equal(p.tilt,0)});
+test('brief noise does not initiate listening',()=>{const g=new ListeningGesture();g.update(sound,0,.016);assert.equal(g.update(quiet,80,.016).active,false)});
