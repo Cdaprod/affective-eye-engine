@@ -2,9 +2,13 @@
 
 Hardware-agnostic, procedural eyes driven by local face detection, anonymous attention tracking, device orientation, and an independently testable affect model. The camera is **never rendered as a preview**.
 
-[**Launch inspector**](https://cdaprod.github.io/affective-eye-engine/) · [**Expression gallery**](https://cdaprod.github.io/affective-eye-engine/gallery.html) · [**Actions**](https://github.com/Cdaprod/affective-eye-engine/actions)
+[**Launch inspector**](https://cdaprod.github.io/affective-eye-engine/index.html) · [**Expression gallery**](https://cdaprod.github.io/affective-eye-engine/gallery.html) · [**Actions**](https://github.com/Cdaprod/affective-eye-engine/actions)
 
 ![Expressions](artifacts/previews/neutral.svg) ![Curious](artifacts/previews/curious.svg)
+
+## Integrated behavior baseline — V006
+
+All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, adaptive tracking, native camera constraints and minimum zoom where available, peripheral memory, proximity scale (0.65–1.4), autonomous contextual emotes, orientation, simulation and SVG snapshots. The gallery now includes generated gaze, proximity and six emote animations. Disable autonomous emotes to isolate gaze and proximity during testing.
 
 ## Quick start
 

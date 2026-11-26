@@ -1,5 +1,5 @@
 import {mkdirSync,writeFileSync} from 'node:fs';
-import {eyeSVG,presets} from '../src/core.ts';
+import {eyeSVG,presets,EmoteEngine,proximityScale,gazeResponse,GazeSpring} from '../src/core.ts';
 
 mkdirSync('artifacts/previews',{recursive:true});
 mkdirSync('artifacts/animations',{recursive:true});
@@ -25,4 +25,17 @@ const frames=Array.from({length:count},(_,i)=>{
 });
 const animation='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300">'+frames.join('')+'</svg>';
 writeFileSync('artifacts/animations/attention-switch.svg',animation);
-writeFileSync('artifacts/manifest.json',JSON.stringify({version:2,seed:0,renderer:'src/core.ts:eyeSVG',entries:manifest,contactSheet:'artifacts/contact-sheet.svg',animations:['artifacts/animations/attention-switch.svg']},null,2)+'\n');
+const extra:string[]=[];
+function animated(name:string,frames:string[],seconds:number){
+ const n=frames.length;
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300">'+frames.map((f,i)=>'<g visibility="hidden">'+f+'<animate attributeName="visibility" values="'+Array.from({length:n},(_,j)=>i===j?'visible':'hidden').join(';')+'" dur="'+seconds+'s" calcMode="discrete" repeatCount="indefinite"/></g>').join('')+'</svg>';
+ const file='artifacts/animations/'+name+'.svg';writeFileSync(file,svg);extra.push(file);
+}
+const spring=new GazeSpring();
+animated('gaze-response',Array.from({length:90},(_,i)=>eyeSVG({...presets.neutral,x:spring.step(gazeResponse(.25*Math.sin(i/90*Math.PI*2)),1/30),y:0,blink:0})),3);
+animated('proximity',Array.from({length:90},(_,i)=>eyeSVG({...presets.neutral,x:0,y:0,blink:0,scale:proximityScale(.06+.44*(1-Math.cos(i/90*Math.PI*2))/2)})),3);
+for(const name of ['greet','surprise','curious','wink','sleepy','delight'] as const){
+ const engine=new EmoteEngine(()=>.5);engine.active=name;engine.start=0;
+ animated(name,Array.from({length:72},(_,i)=>{const em=engine.update(undefined,i*1000/30);return eyeSVG({x:0,y:0,blink:0,valence:em.valence*em.weight,arousal:em.arousal*em.weight,asymmetry:em.asymmetry*em.weight,wink:em.wink,tilt:em.tilt,bounce:em.bounce})}),2.4);
+}
+writeFileSync('artifacts/manifest.json',JSON.stringify({version:6,seed:0,renderer:'src/core.ts:eyeSVG',entries:manifest,contactSheet:'artifacts/contact-sheet.svg',animations:['artifacts/animations/attention-switch.svg',...extra]},null,2)+'\n');
