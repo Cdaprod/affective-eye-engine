@@ -1,1 +1,26 @@
-{"name":"affective-eye-engine","version":"0.1.0","private":true,"type":"module","scripts":{"dev":"vite","build":"tsc --noEmit && vite build","test":"tsx --test tests/*.test.ts","render":"tsx scripts/render.ts"},"dependencies":{"@mediapipe/tasks-vision":"0.10.22-rc.20250304"},"devDependencies":{"typescript":"^5.7.3","vite":"^6.1.0","tsx":"^4.19.3","@types/node":"^22.0.0"}}
+{
+  "name": "affective-eye-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "tsx --test tests/*.test.ts",
+    "render": "tsx scripts/render.ts",
+    "preview": "vite preview",
+    "render:cinematic": "tsx scripts/render-cinematic.ts"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
+    "three": "^0.181.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "tsx": "^4.19.3",
+    "@types/node": "^22.0.0",
+    "@types/three": "^0.181.0",
+    "playwright": "^1.57.0"
+  }
+}

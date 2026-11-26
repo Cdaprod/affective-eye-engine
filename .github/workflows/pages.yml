@@ -27,15 +27,24 @@ jobs:
         run: npm run render
       - name: Build multi-page inspector
         run: npm run build
+      - name: Install headless Chromium for real WebGL screenshots
+        run: npx playwright install chromium --with-deps
+      - name: Capture cinematic renders (WebGL browser)
+        run: npm run render:cinematic
       - name: Verify published HTML and generated assets
         run: |
           test -s dist/index.html
           test -s dist/gallery.html
           test -s artifacts/contact-sheet.svg
           test -s artifacts/animations/attention-switch.svg
+          test -s artifacts/cinematic/cinematic-neutral.png
+          test -s artifacts/cinematic/glass-material.png
+          test -s artifacts/cinematic/portrait.png
+          test -s artifacts/cinematic/svg-fallback.png
           mkdir -p dist/artifacts
           cp -R artifacts/. dist/artifacts/
           test -s dist/artifacts/animations/attention-switch.svg
+          test -s dist/artifacts/cinematic/cinematic-neutral.png
       - uses: actions/upload-artifact@v4
         with:
           name: eye-preview-artifacts
