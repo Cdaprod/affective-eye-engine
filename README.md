@@ -125,3 +125,7 @@ The model and WASM assets are fetched from Google and jsDelivr on first use; det
 ## Docker
 
 `docker compose up --build` serves the inspector on port 8080. Use an HTTPS proxy for camera access on other devices.
+
+## V012 — Group conversation
+
+New group attention arbitration acknowledges visible people in quiet intervals, prioritizes sustained audiovisual speaking cues, and holds attention during ambiguous sound. A local 8×8 lower-face motion proxy estimates mouth activity relative to upper patch motion; it is not a trained active-speaker model. Mono audio supports visual correlation; stereo balance is supplementary. No identity or audio/video recording. Enable camera and microphone for group demonstrations.
