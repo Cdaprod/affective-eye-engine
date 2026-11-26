@@ -1,1 +1,16 @@
-<!doctype html><html><meta name="viewport" content="width=device-width"><title>Eye gallery</title><body style="background:#101923;color:white;font:16px system-ui"><a href="./index.html" style="color:cyan">Inspector</a><h1>Expression gallery</h1><div id="gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px"></div><script type="module">import {presets,eyeSVG} from './src/core.ts';for(const [name,p] of Object.entries(presets)){const d=document.createElement('div');d.innerHTML=eyeSVG({...p,x:0,y:0,blink:0})+name;document.querySelector('#gallery').append(d)}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Affective Eye Engine — Render Gallery</title>
+<style>body{background:#101923;color:#e0edf5;font:16px system-ui;margin:auto;max-width:1120px;padding:20px}a{color:#76e4ff}h1{font-size:clamp(1.5rem,4vw,2.5rem)}.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.tile{background:#192632;border:1px solid #304657;border-radius:14px;overflow:hidden;padding:12px}.tile svg{display:block;width:100%;border-radius:8px}.tile h2{font-size:1rem;font-weight:500;margin:10px 4px}</style></head>
+<body><p><a href="./index.html">← Interactive inspector</a></p><h1>Procedural expression gallery</h1><p>Each tile is rendered from the same deterministic geometry engine as the inspector. The pipeline additionally publishes a contact sheet and an animated attention switch.</p><div id="gallery" class="gallery"></div><script type="module">
+import {presets,eyeSVG} from './src/core.ts';
+const root=document.querySelector('#gallery');
+for(const [name,p] of Object.entries(presets)){
+ const tile=document.createElement('article');tile.className='tile';
+ const rendering=document.createElement('div');rendering.innerHTML=eyeSVG({...p,x:0,y:0,blink:0});
+ const title=document.createElement('h2');title.textContent=name;
+ tile.append(rendering,title);root.append(tile);
+}
+</script><p><a href="./artifacts/contact-sheet.svg">Generated contact sheet</a> · <a href="./artifacts/animations/attention-switch.svg">Animated attention switch</a></p>
+</body></html>
