@@ -6,7 +6,7 @@ Hardware-agnostic, procedural eyes driven by local face detection, anonymous att
 
 ![Expressions](artifacts/previews/neutral.svg) ![Curious](artifacts/previews/curious.svg)
 
-## Integrated behavior baseline — V006
+## Integrated behavior baseline — V007
 
 All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, adaptive tracking, native camera constraints and minimum zoom where available, peripheral memory, proximity scale (0.65–1.4), autonomous contextual emotes, orientation, simulation and SVG snapshots. The gallery now includes generated gaze, proximity and six emote animations. Disable autonomous emotes to isolate gaze and proximity during testing.
 
@@ -25,6 +25,9 @@ npm run dev
 Open the Vite URL. Camera access requires HTTPS or localhost; on an iPhone use the GitHub Pages endpoint. Camera and orientation permissions must be granted through user gestures.
 
 ### Inspector operations
+
+The eyes occupy the entire viewport by default. Tap the eyes to reveal or dismiss the overlay controls. Use Enter fullscreen where the browser supports it; on iPhone browser chrome may remain. The eye aspect ratio is preserved in portrait and landscape. Sensors continue running when controls are hidden.
+
 
 - **Enable camera:** start local MediaPipe BlazeFace inference; choose and follow temporary anonymous targets, alternating approximately every 2.6 seconds when multiple faces are visible.
 - **Enable orientation:** read the browser device-orientation event and apply simple tilt compensation (not calibrated 3D tracking).
