@@ -34,7 +34,7 @@ All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, 
 
 - Visual intention: confirmed visual acquisition, remembered targets, searching, settling and resting; gaze and proximity use separate smoothing.
 - Acoustic perception: optional local microphone, stereo RMS balance where two channels are exposed, mono fallback, acoustic activity and visual target association.
-- Listening gestures: shared facial pivot, 100 ms onset confirmation on the smoothed acoustic envelope, alternating 10° curiosity pulses (120 ms attack, 60 ms hold, 260 ms return, at least 1.9 s between onsets), 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
+- Listening gestures: shared facial pivot, 100 ms onset confirmation on the smoothed acoustic envelope, initial bilateral 10° sweep (120 ms attack, 60 ms hold, 260 ms direct crossover, 60 ms hold, 260 ms return), followed by alternating short pulses at least 1.9 s between onsets, 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
 
 Audio activity is a heuristic, not speech classification or calibrated direction of arrival. Sustained noise may trigger periodic listening gestures; voice activity detection and conversational acknowledgments are future work.
 
