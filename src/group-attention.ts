@@ -6,14 +6,14 @@ export class GroupAttention {
   for(const id of this.lastVisit.keys())if(!ts.some(t=>t.id===id)){this.lastVisit.delete(id);this.evidence.delete(id)}
   if(!ts.length){this.active=null;this.candidate=null;return undefined}
   const current=ts.find(t=>t.id===this.active);
-  const scores=ts.map(t=>{const visual=clamp(motion.get(t.id)??0,0,1);const spatial=sound.directional?Math.max(0,1-Math.abs(t.x-sound.pan)/.65):0;const raw=sound.activity>.22?visual*.8+spatial*.2:0;const score=smooth(this.evidence.get(t.id)??0,raw,dt,4);this.evidence.set(t.id,score);return {t,score}});
+  const scores=ts.map(t=>{const visual=clamp(motion.get(t.id)??0,0,1);const spatial=sound.directional?Math.max(0,1-Math.abs(t.x-sound.pan)/.65):0;const raw=sound.activity>.22?visual*.8+spatial*.2:0;const score=smooth(this.evidence.get(t.id)??0,raw,dt,raw>(this.evidence.get(t.id)??0)?10:4);this.evidence.set(t.id,score);return {t,score}});
   const ranked=scores.sort((a,b)=>b.score-a.score);const best=ranked[0];const incumbent=scores.find(s=>s.t.id===this.active)?.score??0;
   const speaker=best.score>.16&&(ts.length===1||best.score-(ranked[1]?.score??0)>.08);
   let next=current;
   if(!current)next=best.t;
   else if(speaker&&best.t.id!==current.id&&best.score>incumbent+.08){
    if(this.candidate!==best.t.id){this.candidate=best.t.id;this.candidateSince=now}
-   if(now-this.candidateSince>=450&&now-this.since>=1100)next=best.t;
+   if(now-this.candidateSince>=220&&now-this.since>=750)next=best.t;
   }else{this.candidate=null;
    if(!speaker&&sound.activity<.22&&now-this.since>=2200){
     next=[...ts].sort((a,b)=>(this.lastVisit.get(a.id)??-Infinity)-(this.lastVisit.get(b.id)??-Infinity))[0];

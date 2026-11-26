@@ -9,3 +9,5 @@ test('continuous sound holds a bounded tilt without repeated onset',()=>{
  assert.ok(!p.active);assert.ok(Math.abs(p.tilt)<.05);
 });
 test('brief noise does not initiate listening',()=>{const g=new ListeningGesture();g.update({activity:1,pan:0,directional:false},0,.016);assert.equal(g.update({activity:0,pan:0,directional:false},100,.016).active,false)});
+
+test('sustained acoustic onset produces visible tilt within 200ms',()=>{const g=new ListeningGesture();let p=g.update({activity:1,pan:0,directional:false},0,.016);for(let n=16;n<=192;n+=16)p=g.update({activity:1,pan:0,directional:false},n,.016);assert.ok(p.active);assert.ok(p.tilt>4);});
