@@ -3,7 +3,7 @@ export type Detection=Omit<Target,'id'|'seen'>;
 export const clamp=(x:number,min=-1,max=1)=>Math.max(min,Math.min(max,x));
 export const smooth=(x:number,y:number,dt:number,k=8)=>x+(y-x)*(1-Math.exp(-k*dt));
 // Amplify small camera offsets while retaining a bounded, continuous response.
-export const gazeResponse=(x:number)=>Math.tanh(2.8*x)/Math.tanh(2.8);
+export const gazeResponse=(x:number)=>Math.tanh(5.5*x)/Math.tanh(5.5);
 export class GazeSpring {
  position=0; velocity=0;
  step(target:number,dt:number){
@@ -25,3 +25,17 @@ export class Attention {active:number|null=null; since=0; choose(ts:Target[],now
 export type Eyes={x:number,y:number,valence:number,arousal:number,blink:number,asymmetry:number};
 export const presets:Record<string,Pick<Eyes,'valence'|'arousal'|'asymmetry'>>={neutral:{valence:0,arousal:0,asymmetry:0},happy:{valence:1,arousal:.3,asymmetry:0},curious:{valence:.2,arousal:.5,asymmetry:.35},focused:{valence:-.45,arousal:.1,asymmetry:0},sleepy:{valence:0,arousal:-.9,asymmetry:0},surprised:{valence:.2,arousal:1,asymmetry:0}};
 export function eyeSVG(e:Eyes){const shapes=[0,1].map(i=>{const h=Math.max(3,(100+e.arousal*45)*(1-clamp(e.blink,0,.98))*(1-(i?e.asymmetry:0)));const w=110, r=Math.min(32,h/2), tilt=(i?1:-1)*Math.min(0,e.valence)*18;const cx=190+i*260+clamp(e.x,-1.12,1.12)*105,cy=150+clamp(e.y,-1.12,1.12)*55;const d=e.valence>.45&&e.blink<.8?`M -55 12 Q -48 ${-h} 0 ${-h*.65} Q 48 ${-h} 55 12 Q 0 ${-h*.38} -55 12 Z`:null;return `<g transform="translate(${cx} ${cy}) rotate(${tilt})">${d?`<path d="${d}"/>`:`<rect x="${-w/2}" y="${-h/2}" width="${w}" height="${h}" rx="${r}"/>`}</g>`}).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300"><rect width="640" height="300" fill="#080e16"/><g fill="#76e4ff">${shapes}</g></svg>`;}
+
+export class GazeMemory {
+ last:Target|undefined;
+ resolve(target:Target|undefined,now:number){
+  if(target){this.last={...target,seen:now};return target}
+  if(!this.last)return undefined;
+  const age=now-this.last.seen;
+  const hold=Math.abs(this.last.x)>.65?3500:1500;
+  if(age<hold)return this.last;
+  if(age<hold+1200){const f=1-(age-hold)/1200;return {...this.last,x:this.last.x*f,y:this.last.y*f}}
+  return undefined;
+ }
+ reset(){this.last=undefined}
+}
