@@ -26,15 +26,15 @@ These browser captures are published by CI from the latest successful Pages depl
 
 *Illustrative listening poses, not a browser capture.*
 
-## Integrated behavior baseline — V011
+## Integrated behavior
 
 All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, adaptive tracking, native camera constraints and minimum zoom where available, peripheral memory, proximity scale (0.65–1.4), autonomous contextual emotes, orientation, simulation and SVG snapshots. The gallery now includes generated gaze, proximity and six emote animations. Disable autonomous emotes to isolate gaze and proximity during testing.
 
-## Multimodal behavior — V009–V011
+## Multimodal behavior
 
-- V009: confirmed visual acquisition, remembered targets, searching, settling and resting; gaze and proximity use separate smoothing.
-- V010: optional local microphone, stereo RMS balance where two channels are exposed, mono fallback, acoustic activity and visual target association.
-- V011: shared facial pivot, 250 ms onset confirmation on the smoothed acoustic envelope, bounded 9° curiosity target settling toward 4°, latched tilt direction, 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
+- Visual intention: confirmed visual acquisition, remembered targets, searching, settling and resting; gaze and proximity use separate smoothing.
+- Acoustic perception: optional local microphone, stereo RMS balance where two channels are exposed, mono fallback, acoustic activity and visual target association.
+- Listening gestures: shared facial pivot, 250 ms onset confirmation on the smoothed acoustic envelope, bounded 9° curiosity target settling toward 4°, latched tilt direction, 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
 
 Audio activity is a heuristic, not speech classification or calibrated direction of arrival. Sustained noise may maintain a listening pose; voice activity detection and conversational acknowledgments are future work.
 
@@ -51,9 +51,9 @@ flowchart TD
  R --> S[SVG fallback]
 ```
 
-## Cinematic rendering — V008 onward
+## Cinematic rendering
 
-The immersive V007 viewport now defaults to a real Three.js WebGL shader renderer. Two signed-distance-field eye shapes are shaded with procedural lighting, responsive glints, material gradients, filmic color mapping, analytical bloom, velocity-driven squash/stretch, subtle breathing and temporal expression morphs. No external 3D models or camera texture uploads are needed.
+The immersive viewport now defaults to a real Three.js WebGL shader renderer. Two signed-distance-field eye shapes are shaded with procedural lighting, responsive glints, material gradients, filmic color mapping, analytical bloom, velocity-driven squash/stretch, subtle breathing and temporal expression morphs. No external 3D models or camera texture uploads are needed.
 
 Tap anywhere to open the inspector overlay. Renderer modes: **Cinematic (WebGL)**, **Ultra (WebGL + UnrealBloomPass/OutputPass when quality is High)**, and **Classic (SVG)**. Choose Lightweight/Balanced/High performance profiles, luminous/glass materials, emission and bloom intensity. WebGL context loss or initialization failure falls back to the existing SVG geometry. The renderer reads the *same* state pipeline for gaze, face proximity, blink, emotes, and orientation; it never independently calls camera APIs.
 
@@ -82,7 +82,7 @@ Open the Vite URL. Camera access requires HTTPS or localhost; on an iPhone use t
 The eyes occupy the entire viewport by default. Tap the eyes to reveal or dismiss the overlay controls. Use Enter fullscreen where the browser supports it; on iPhone browser chrome may remain. The eye aspect ratio is preserved in portrait and landscape. Sensors continue running when controls are hidden.
 
 
-- **Enable camera:** start local MediaPipe BlazeFace inference; choose and follow temporary anonymous targets, alternating approximately every 2.6 seconds when multiple faces are visible.
+- **Enable camera:** start local MediaPipe BlazeFace inference; choose and follow temporary anonymous targets, prioritizing audiovisual speaking cues and acknowledging other faces during quiet intervals.
 - **Enable orientation:** read the browser device-orientation event and apply simple tilt compensation (not calibrated 3D tracking).
 - **Toggle two-person simulation:** deterministic synthetic targets, no camera required.
 - **Toggle microphone:** explicitly grant local audio access; no recording or playback.
@@ -126,6 +126,10 @@ The model and WASM assets are fetched from Google and jsDelivr on first use; det
 
 `docker compose up --build` serves the inspector on port 8080. Use an HTTPS proxy for camera access on other devices.
 
-## V012 — Group conversation
+## Group conversation
 
 New group attention arbitration acknowledges visible people in quiet intervals, prioritizes sustained audiovisual speaking cues, and holds attention during ambiguous sound. A local 8×8 lower-face motion proxy estimates mouth activity relative to upper patch motion; it is not a trained active-speaker model. Mono audio supports visual correlation; stereo balance is supplementary. No identity or audio/video recording. Enable camera and microphone for group demonstrations.
+
+## Release and build policy
+
+`main` is the latest integrated source. GitHub Pages serves the latest successful main deployment. Feature names are descriptive, not numbered versions. `package.json` owns the SemVer release number; release tags must match `v<package version>`. Individual builds are identified by their Git commit SHA. The inspector and gallery expose package version and build SHA; CI publishes `build-info.json`. Do not bump package versions for every feature. For an intentional release, validate main, run `npm version patch` (or `minor`/`major` as appropriate), then push main and the resulting tag. The tag workflow validates the tagged commit and creates a GitHub Release with generated notes and a built site archive. The package remains private; no npm registry publishing is configured.

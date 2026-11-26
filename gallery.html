@@ -3,7 +3,7 @@
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Affective Eye Engine — Render Gallery</title>
 <style>body{background:#101923;color:#e0edf5;font:16px system-ui;margin:auto;max-width:1120px;padding:20px}a{color:#76e4ff}h1{font-size:clamp(1.5rem,4vw,2.5rem)}.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.tile{background:#192632;border:1px solid #304657;border-radius:14px;overflow:hidden;padding:12px}.tile svg{display:block;width:100%;border-radius:8px}.tile h2{font-size:1rem;font-weight:500;margin:10px 4px}</style></head>
-<body><p><a href="./index.html">← Interactive inspector</a></p><h1>Procedural expression gallery</h1><p>Each tile is rendered from the same deterministic geometry engine as the inspector. The pipeline additionally publishes a contact sheet and an animated attention switch.</p><div id="gallery" class="gallery"></div><script type="module">
+<body><p><a href="./index.html">← Interactive inspector</a></p><h1>Procedural expression gallery</h1><p id="build-info"></p><script type="module" src="/src/build-info.ts"></script><p>Each tile is rendered from the same deterministic geometry engine as the inspector. The pipeline additionally publishes a contact sheet and an animated attention switch.</p><div id="gallery" class="gallery"></div><script type="module">
 import {presets,eyeSVG} from './src/core.ts';
 const root=document.querySelector('#gallery');
 for(const [name,p] of Object.entries(presets)){
