@@ -1,16 +1,57 @@
 # Affective Eye Engine
 
-Hardware-agnostic, procedural eyes driven by local face detection, anonymous attention tracking, device orientation, and an independently testable affect model. The camera is **never rendered as a preview**.
+Hardware-agnostic, procedural eyes driven by local face detection, anonymous attention tracking, device orientation, acoustic perception, persistent attention, and procedural affective gestures. The camera is **never rendered as a preview**.
 
 [**Launch inspector**](https://cdaprod.github.io/affective-eye-engine/index.html) · [**Expression gallery**](https://cdaprod.github.io/affective-eye-engine/gallery.html) · [**Actions**](https://github.com/Cdaprod/affective-eye-engine/actions)
 
-![Expressions](artifacts/previews/neutral.svg) ![Curious](artifacts/previews/curious.svg)
+## Cinematic preview
 
-## Integrated behavior baseline — V008
+[![Actual Chromium WebGL capture](https://cdaprod.github.io/affective-eye-engine/artifacts/cinematic/cinematic-neutral.png)](https://cdaprod.github.io/affective-eye-engine/index.html)
+
+| Dark glass | Portrait |
+| --- | --- |
+| ![Glass material](https://cdaprod.github.io/affective-eye-engine/artifacts/cinematic/glass-material.png) | ![Portrait viewport](https://cdaprod.github.io/affective-eye-engine/artifacts/cinematic/portrait.png) |
+
+These browser captures are published by CI from the latest successful Pages deployment.
+
+### Expression vocabulary
+
+| Neutral | Curious | Happy |
+| --- | --- | --- |
+| ![Neutral](artifacts/previews/neutral.svg) | ![Curious](artifacts/previews/curious.svg) | ![Happy](artifacts/previews/happy.svg) |
+| ![Focused](artifacts/previews/focused.svg) | ![Sleepy](artifacts/previews/sleepy.svg) | ![Surprised](artifacts/previews/surprised.svg) |
+| Focused | Sleepy | Surprised |
+
+![Listening gesture design](docs/assets/listening.svg)
+
+*Illustrative listening poses, not a browser capture.*
+
+## Integrated behavior baseline — V011
 
 All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, adaptive tracking, native camera constraints and minimum zoom where available, peripheral memory, proximity scale (0.65–1.4), autonomous contextual emotes, orientation, simulation and SVG snapshots. The gallery now includes generated gaze, proximity and six emote animations. Disable autonomous emotes to isolate gaze and proximity during testing.
 
-## Cinematic rendering — V008
+## Multimodal behavior — V009–V011
+
+- V009: confirmed visual acquisition, remembered targets, searching, settling and resting; gaze and proximity use separate smoothing.
+- V010: optional local microphone, stereo RMS balance where two channels are exposed, mono fallback, acoustic activity and visual target association.
+- V011: shared facial pivot, 250 ms onset confirmation on the smoothed acoustic envelope, bounded 9° curiosity target settling toward 4°, latched tilt direction, 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
+
+Audio activity is a heuristic, not speech classification or calibrated direction of arrival. Sustained noise may maintain a listening pose; voice activity detection and conversational acknowledgments are future work.
+
+```mermaid
+flowchart TD
+ C[Camera / anonymous targets] --> F[Attention and intention]
+ A[Microphone / acoustic envelope] --> F
+ A --> L[Persistent listening gesture]
+ O[Device orientation] --> F
+ F --> E[Smoothed eye state]
+ L --> E
+ E --> R[Animation compositor]
+ R --> W[Three.js WebGL]
+ R --> S[SVG fallback]
+```
+
+## Cinematic rendering — V008 onward
 
 The immersive V007 viewport now defaults to a real Three.js WebGL shader renderer. Two signed-distance-field eye shapes are shaded with procedural lighting, responsive glints, material gradients, filmic color mapping, analytical bloom, velocity-driven squash/stretch, subtle breathing and temporal expression morphs. No external 3D models or camera texture uploads are needed.
 
@@ -44,7 +85,8 @@ The eyes occupy the entire viewport by default. Tap the eyes to reveal or dismis
 - **Enable camera:** start local MediaPipe BlazeFace inference; choose and follow temporary anonymous targets, alternating approximately every 2.6 seconds when multiple faces are visible.
 - **Enable orientation:** read the browser device-orientation event and apply simple tilt compensation (not calibrated 3D tracking).
 - **Toggle two-person simulation:** deterministic synthetic targets, no camera required.
-- **Stop sensors:** release video tracks, deactivate orientation, and stop the simulation.
+- **Toggle microphone:** explicitly grant local audio access; no recording or playback.
+- **Stop sensors:** release audio and video tracks, deactivate orientation, and stop the simulation.
 - **Save SVG snapshot:** export the currently rendered procedural eye geometry without capturing any camera frames.
 - **Gallery:** examine all six expressions from the canonical geometry engine.
 
@@ -69,6 +111,8 @@ The workflow validates pull requests without deploying. Pushes to `main` validat
 ## Architecture & privacy
 
 - `src/core.ts`: pure deterministic geometry, expressions, smoothing, anonymous centroid tracking and attention.
+- `src/audio.ts`: local acoustic activity and stereo balance.
+- `src/listening.ts`: persistent bounded listening gestures.
 - `src/main.ts`: client-side MediaPipe inference, device sensors and interaction, feeding both renderers.
 - `src/rendering/`: typed rendering contract, perceptual compositor, Three.js shader renderer, geometry-preserving SVG fallback, quality profiles and shader sources.
 - `scripts/render.ts`: static, contact-sheet and animated SVG generators.
