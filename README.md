@@ -36,7 +36,7 @@ All previous capabilities are retained: high-gain gaze (5.5), damped overshoot, 
 - Acoustic perception: optional local microphone, stereo RMS balance where two channels are exposed, mono fallback, acoustic activity and visual target association.
 - Listening gestures: shared facial pivot, 100 ms onset confirmation on the smoothed acoustic envelope, initial bilateral 10° sweep (120 ms attack, 80 ms hold, 240 ms direct crossover, 80 ms hold, 120 ms return), followed by alternating short pulses at least 1.9 s between onsets, 1.8 s quiet confirmation, and suppression of competing automatic emotes during listening.
 
-Audio activity is a heuristic, not speech classification or calibrated direction of arrival. Sustained noise may trigger periodic listening gestures; voice activity detection and conversational acknowledgments are future work.
+Neural Silero VAD is attempted on microphone activation, with an acoustic energy fallback when unavailable. Stereo balance is not calibrated direction of arrival. Sustained noise may trigger periodic listening gestures; voice activity detection and conversational acknowledgments are future work.
 
 ```mermaid
 flowchart TD
@@ -113,6 +113,9 @@ The workflow validates pull requests without deploying. Pushes to `main` validat
 - `src/core.ts`: pure deterministic geometry, expressions, smoothing, anonymous centroid tracking and attention.
 - `src/audio.ts`: local acoustic activity and stereo balance.
 - `src/listening.ts`: persistent bounded listening gestures.
+- `src/perception/`: MediaPipe landmarks, optional worker inference, hand gestures, neural VAD and audiovisual fusion.
+- `src/behavior/`: continuous personality and intentional attention.
+- `src/animation/`: priority-aware facial animation director.
 - `src/main.ts`: client-side MediaPipe inference, device sensors and interaction, feeding both renderers.
 - `src/rendering/`: typed rendering contract, perceptual compositor, Three.js shader renderer, geometry-preserving SVG fallback, quality profiles and shader sources.
 - `scripts/render.ts`: static, contact-sheet and animated SVG generators.
@@ -137,3 +140,7 @@ New group attention arbitration acknowledges visible people in quiet intervals, 
 Audio responsiveness uses a fast attack (18/s acoustic envelope, 100 ms listening confirmation, 120 ms procedural tilt attack) and slow release; group speaker handoffs require 220 ms candidate confirmation and 750 ms minimum focus. These are tuning parameters, not measured device latency.
 
 Opening tilt direction alternates independently across listening sessions, regardless of stereo balance. Stereo cues remain available for gaze and speaker association. Both halves of the initial sweep have equal peak magnitude and symmetric timing.
+
+## Social perception and character runtime
+
+The latest main integrates up to four multi-face landmark tracks (when supported), a worker-first asynchronous perception pipeline, jaw and facial-motion correlation to neural VAD, optional hand recognition, persistent PAD-inspired personality, gesture priority and semantic events. The face detector is a fallback when landmark initialization fails. Hand inference is opt-in in the inspector and should be disabled on low-power devices. An external integration may dispatch `window.dispatchEvent(new CustomEvent('affective-intent',{detail:{kind:'thinking'}}))`; supported kinds are listening, thinking, speaking, confused, acknowledging, and happy. This is an intent input, not a connected language model. Visual affect is a heuristic and is not a measure of actual emotional state.

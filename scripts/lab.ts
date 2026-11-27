@@ -1,0 +1,26 @@
+import {writeFileSync,mkdirSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {ListeningGesture} from '../src/listening';
+import {GroupAttention} from '../src/group-attention';
+import {PersonalityEngine} from '../src/behavior/personality';
+import {AnimationDirector} from '../src/animation/director';
+type Result={name:string;passed:boolean;observed:Record<string,number|string>};
+const results:Result[]=[];
+const listen=new ListeningGesture(),speech={activity:1,pan:.8,directional:true};
+listen.update(speech,0,.016);listen.update(speech,100,.016);
+const left=listen.update(speech,220,.016).tilt,right=listen.update(speech,540,.016).tilt,settle=listen.update(speech,740,.016).tilt;
+assert.equal(Math.abs(left),10);assert.equal(right,-left);assert.equal(settle,0);
+results.push({name:'balanced-direct-bilateral-sweep',passed:true,observed:{left,right,settle}});
+const group=new GroupAttention(),faces=[{id:1,x:-.6,y:0,size:.2,seen:0},{id:2,x:.6,y:0,size:.2,seen:0}];
+group.choose(faces,{activity:0,pan:0,directional:false},new Map(),0,.016);
+let focus=0;for(let t=16;t<3000;t+=16)focus=group.choose(faces,{activity:1,pan:.6,directional:true},new Map([[2,.95]]),t,.016)?.id??0;
+assert.equal(focus,2);
+results.push({name:'speaker-handoff-hysteresis',passed:true,observed:{focus}});
+const affect=new PersonalityEngine();let final=affect.state.arousal;
+for(let n=0;n<600;n++)final=affect.step({people:2,smile:.2,brow:0,voice:1},.016).arousal;
+assert.ok(final<.3);results.push({name:'habituated-conversation',passed:true,observed:{arousal:final}});
+const animation=new AnimationDirector();
+let max=0;for(let t=0;t<8000;t+=16){const s=animation.step({intention:'listening',gazeChanged:t===0,time:t,dt:.016,listeningTilt:0,listeningArousal:.1});max=Math.max(max,s.blink)}
+assert.ok(max<=1&&max>.8);results.push({name:'blink-and-motion-bounds',passed:true,observed:{maxBlink:max}});
+mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/lab-report.json',JSON.stringify({source:'deterministic synthetic scenarios (not hardware measurements)',results},null,2)+'\n');
+console.log('Motion lab: '+results.length+' scenarios passed');

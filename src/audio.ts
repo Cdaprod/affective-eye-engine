@@ -2,6 +2,7 @@ import {clamp,smooth} from './core';
 export class AcousticPerception {
  private context?:AudioContext;private stream?:MediaStream;private nodes:AnalyserNode[]=[];private buffers:Float32Array<ArrayBuffer>[]=[];private generation=0;private activity=0;private pan=0;private noise=.008;private directional=false;private until=0;
  get active(){return !!this.stream?.active}
+ get mediaStream(){return this.stream}
  async start(){
   this.stop();const token=this.generation;const context=new AudioContext();this.context=context;
   try{await context.resume();const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:{ideal:2},echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
