@@ -21,7 +21,7 @@ export class RageEffects {
  const px=svg?k*((e.physicalX??0)*Math.max(0,190-scale*75)+mix*e.x*105):clamp(mix*e.x*Math.min(w*.115,Math.max(0,(w*.5-gap-ew*1.1)/1.12))+(e.physicalX??0)*tx,-tx,tx);
  const py=svg?k*((e.physicalY??0)*Math.max(0,115-scale*80)+mix*e.y*55+(e.bounce??0)):clamp(mix*e.y*Math.min(h*.17,Math.max(0,(h*.5-eh*1.15)/1.12))+(e.physicalY??0)*ty-(e.bounce??0)*h/300,-ty,ty);
  const rx=svg?k*(130+55*scale):gap+ew,ry=svg?k*55*scale:eh;
- c.save();c.translate(w/2+px,h/2+py);c.rotate((e.tilt??0)*Math.PI/180);
+ c.save();c.translate(w/2+px,h/2+py);c.rotate((svg?1:-1)*(e.tilt??0)*Math.PI/180);
  if(state.phase==='charge'||state.phase==='super'){
  const power=state.phase==='super'?1:.55;
  // Vertical flame tongues, open center: no radial sunburst.
@@ -30,7 +30,10 @@ export class RageEffects {
  if(state.phase==='super')for(const side of [-1,1]){c.beginPath();for(let j=0;j<7;j++){const xx=side*rx*(1.05+.12*Math.sin(j*4+t*9)),yy=ry*(1.3-j*.55);j?c.lineTo(xx,yy):c.moveTo(xx,yy)}c.strokeStyle='#fff3ac';c.lineWidth=3;c.stroke()}
  }
  if(state.steam>0)for(const side of [-1,1])for(let i=0;i<8;i++){const u=(t*.9+i/8)%1,xx=side*rx*(1+u*.7),yy=-ry*(.15+u*1.4);c.beginPath();c.arc(xx,yy,Math.max(4,ry*(.13+u*.35)),0,Math.PI*2);c.fillStyle='rgba(225,238,248,'+state.steam*(1-u)*.85+')';c.fill()}
- c.restore();
+ // Remove effects over the eye silhouettes, preserving the original opaque renderer.
+ c.globalCompositeOperation='destination-out';
+ for(const side of [-1,1]){c.save();c.translate(side*(svg?130*k:gap),0);c.rotate((svg?1:-1)*side*Math.min(0,e.valence)*Math.PI/10);const hw=svg?55*scale*k:ew,hh=svg?Math.max(3,(100+e.arousal*45)*scale*k/2):eh;const pad=Math.max(3,hw*.12);c.beginPath();c.roundRect(-hw-pad,-hh-pad,2*(hw+pad),2*(hh+pad),Math.min(hw*.5,hh*.5));c.fillStyle='#000';c.fill();c.restore()}
+ c.globalCompositeOperation='source-over';c.restore();
  return state}
  reset(){this.sequence.reset();this.ctx?.clearRect(0,0,this.canvas.width,this.canvas.height)}
 }
