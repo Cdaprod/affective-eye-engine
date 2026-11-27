@@ -7,3 +7,6 @@ test('physical momentum and emotion remain independent',()=>{const p=new Physica
 
 test('ordinary small jolts are emotionally ignored',()=>{const m=new MoodEngine();for(let n=0;n<10000;n+=100){m.disturb(n,.12);assert.equal(m.step(n,.016).level,0)}});
 test('five distinct disturbances cannot reach angry',()=>{const m=new MoodEngine();for(let n=0;n<5;n++){m.disturb(n*1200,2);assert.ok(m.step(n*1200,.016).level<.8)}});
+
+test('orientation evidence alone drives mood without injecting physical impulses',()=>{const p=new PhysicalReaction();let s=p.step(0,.016);for(let n=0;n<12000;n+=16){p.observeRotation(150,n);s=p.step(n,.016)}assert.ok(s.frustration>.8);assert.equal(s.x,0);assert.equal(s.impacts,0)});
+test('static orientation and gentle rotation do not drive mood',()=>{const p=new PhysicalReaction();for(let n=0;n<5000;n+=16){p.observeRotation(15,n);assert.equal(p.step(n,.016).frustration,0)}});
