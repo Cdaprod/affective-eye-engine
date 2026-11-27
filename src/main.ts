@@ -28,16 +28,27 @@ let lastVision=-1,lastDetect=-Infinity,message='Manual mode',presenceSince=0,mis
 let intention='resting',intentX=0,intentY=0,qualityFps=60;
 const select=el<HTMLSelectElement>('preset');for(const name of Object.keys(presets))select.add(new Option(name,name));
 const physical=new PhysicalReaction();let lastMotion=-Infinity,lastPose:{beta:number;gamma:number;at:number}|undefined;
+let motionCount=0,motionSource='waiting',motionMagnitude=0,gravity:{x:number;y:number;z:number}|undefined;
 function deviceMotion(ev:DeviceMotionEvent){
- const a=ev.acceleration,r=ev.rotationRate;if(!a||a.x===null||a.y===null)return;
+ const r=ev.rotationRate,raw=ev.accelerationIncludingGravity,a=ev.acceleration;
+ const valid=(v:number|null|undefined):v is number=>typeof v==='number'&&Number.isFinite(v);
+ let x=0,y=0,z=0;
+ if(raw&&valid(raw.x)&&valid(raw.y)&&valid(raw.z)){
+  const g=gravity??{x:raw.x,y:raw.y,z:raw.z};
+  gravity={x:g.x+(raw.x-g.x)*.045,y:g.y+(raw.y-g.y)*.045,z:g.z+(raw.z-g.z)*.045};
+  x=raw.x-gravity.x;y=raw.y-gravity.y;z=raw.z-gravity.z;motionSource='gravity-filtered';
+ }
+ if(a&&valid(a.x)&&valid(a.y)&&Math.hypot(a.x,a.y,a.z??0)>Math.hypot(x,y,z)*.8){x=a.x;y=a.y;z=a.z??0;motionSource='linear'}
+ else if(!gravity)return;
+ motionCount++;motionMagnitude=Math.hypot(x,y,z);
  const angle=(screen.orientation?.angle??Number((window as Window & {orientation?:number}).orientation??0))*Math.PI/180;
- physical.ingest(a.x*Math.cos(angle)+a.y*Math.sin(angle),-a.x*Math.sin(angle)+a.y*Math.cos(angle),Math.hypot(r?.alpha??0,r?.beta??0,r?.gamma??0),performance.now());lastMotion=performance.now();
+ physical.ingest(x*Math.cos(angle)+y*Math.sin(angle),-x*Math.sin(angle)+y*Math.cos(angle),Math.hypot(r?.alpha??0,r?.beta??0,r?.gamma??0),performance.now(),z);lastMotion=performance.now();
 }
 function orient(ev:DeviceOrientationEvent){ox=clamp((ev.gamma??0)/45);oy=clamp(((ev.beta??0)-45)/45);const now=performance.now();if(ev.beta===null||ev.gamma===null)return;const prev=lastPose;lastPose={beta:ev.beta,gamma:ev.gamma,at:now};if(prev&&now-lastMotion>200&&now-prev.at>0&&now-prev.at<200){const delta=(a:number,b:number)=>((a-b+540)%360)-180;const rate=1000/(now-prev.at);const x=delta(ev.gamma,prev.gamma)*rate,y=delta(ev.beta,prev.beta)*rate;physical.ingest(x*.045,y*.045,Math.hypot(x,y),now)}}
 function stop(keepAudio=false){
  generation++;sim=false;stream?.getTracks().forEach(t=>t.stop());stream=undefined;video.pause();video.srcObject=null;vision.close();hands.close();handsOn=false;
  if(!keepAudio){voice.stop();audio.stop();gestures.reset()}
- window.removeEventListener('deviceorientation',orient);window.removeEventListener('devicemotion',deviceMotion);physical.reset();lastPose=undefined;lastMotion=-Infinity;orientation=false;ox=oy=0;
+ window.removeEventListener('deviceorientation',orient);window.removeEventListener('devicemotion',deviceMotion);physical.reset();gravity=undefined;motionCount=0;motionMagnitude=0;motionSource='waiting';lastPose=undefined;lastMotion=-Infinity;orientation=false;ox=oy=0;
  targets=[];tracker.targets=[];attention.reset();mouth.reset();speaker.clear();emotes.reset();personality.reset();intentions.reset();director.reset();faceSignals.clear();
  presenceSince=missingSince=0;engaged=false;held=undefined;previousFocus=null;intentX=intentY=0;lastVision=-1;lastDetect=-Infinity;message='Sensors stopped';
 }
@@ -161,7 +172,7 @@ function frame(now:number){
   blink:Math.max(motion.blink,reaction.recovering?.25:0)
  };
  renderer.render(compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy}));
- el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
+ el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Impacts: '+reaction.impacts+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
  requestAnimationFrame(frame)
 }
 requestAnimationFrame(frame);
