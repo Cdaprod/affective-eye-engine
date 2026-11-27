@@ -56,18 +56,19 @@ function stop(keepAudio=false){
 }
 el('stop').onclick=()=>stop();
 window.addEventListener('pagehide',()=>{stop();semantic.stop();renderer.dispose()});
-el('audio').onclick=async()=>{
+async function enableAudio(provided?:Promise<MediaStream>){
  if(audio.active){voice.stop();audio.stop();gestures.reset();message='Microphone off';return}
- try{await audio.start();const s=audio.mediaStream;if(s){message='Microphone active; initializing neural voice detection';void voice.start(s).then(()=>{message=voice.enabled?'Neural voice detection active':'Acoustic fallback active'}).catch(()=>{message='Acoustic fallback active'})}}
+ try{await audio.start(provided);const s=audio.mediaStream;if(s){message='Microphone active; initializing neural voice detection';void voice.start(s).then(()=>{message=voice.enabled?'Neural voice detection active':'Acoustic fallback active'}).catch(()=>{message='Acoustic fallback active'})}}
  catch(err){message=String(err)}
-};
-el('camera').onclick=async()=>{
- const keepOrientation=orientation;stop(true);
+}
+el('audio').onclick=()=>enableAudio();
+async function enableCamera(provided?:Promise<MediaStream>){
+ const keepOrientation=orientation;if(!provided)stop(true);
  if(keepOrientation){window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true}
  const token=generation;
  try{
   if(!navigator.mediaDevices)throw Error('Camera needs HTTPS or localhost');
-  const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+  const s=await (provided??navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false}));
   if(token!==generation){s.getTracks().forEach(t=>t.stop());return}
   stream=s;
   const track=s.getVideoTracks()[0];try{const caps=track.getCapabilities?.() as MediaTrackCapabilities & {zoom?:{min:number}};if(caps?.zoom)await track.applyConstraints({advanced:[{zoom:caps.zoom.min} as MediaTrackConstraintSet]})}catch{}
@@ -76,14 +77,16 @@ el('camera').onclick=async()=>{
   message='Camera initializing: facial landmarks / worker / detector fallback';
   await vision.start();
   if(token===generation)message='Camera active · '+video.videoWidth+'×'+video.videoHeight+' · '+vision.snapshot.mode;
- }catch(err){if(token===generation){stop(true);message='Camera error: '+String(err)}}
-};
+ }catch(err){if(token===generation){stream?.getTracks().forEach(t=>t.stop());stream=undefined;video.srcObject=null;vision.close();message='Camera error: '+String(err)}}
+}
+el('camera').onclick=()=>enableCamera();
 el('gestures').onclick=async()=>{
  if(handsOn){hands.close();handsOn=false;message='Hand gestures disabled';return}
  if(!stream?.active){message='Enable camera before gestures';return}
  const token=generation;try{await hands.start();if(token!==generation){hands.close();return}handsOn=true;message='Hand gestures enabled'}catch(err){message='Hand gestures unavailable: '+String(err)}
 };
-el('motion').onclick=async()=>{try{const D=window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {requestPermission?:()=>Promise<string>};const M=window.DeviceMotionEvent as typeof DeviceMotionEvent & {requestPermission?:()=>Promise<string>};const permissions=await Promise.allSettled([D?.requestPermission?.()??Promise.resolve(D?'granted':'unavailable'),M?.requestPermission?.()??Promise.resolve(M?'granted':'unavailable')]);if(!permissions.some(p=>p.status==='fulfilled'&&p.value==='granted'))throw Error('Motion permission denied');window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true;message='Physical interaction enabled';el('motion').textContent='Motion enabled — tap to retry'}catch(err){message=String(err)}};
+async function enableMotion(){try{const D=window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {requestPermission?:()=>Promise<string>};const M=window.DeviceMotionEvent as typeof DeviceMotionEvent & {requestPermission?:()=>Promise<string>};const permissions=await Promise.allSettled([D?.requestPermission?.()??Promise.resolve(D?'granted':'unavailable'),M?.requestPermission?.()??Promise.resolve(M?'granted':'unavailable')]);if(!permissions.some(p=>p.status==='fulfilled'&&p.value==='granted'))throw Error('Motion permission denied');window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true;message='Physical interaction enabled';el('motion').textContent='Motion enabled — tap to retry'}catch(err){message=String(err)}}
+el('motion').onclick=()=>enableMotion();
 el('sim').onclick=()=>{const enable=!sim;stop();sim=enable;message=sim?'Three-person simulation':'Manual mode'};
 const gazeX=new GazeSpring(),gazeY=new GazeSpring(),compositor=new AnimationCompositor();
 let last=performance.now(),eyes:Eyes={x:0,y:0,valence:0,arousal:0,blink:0,asymmetry:0};
@@ -98,6 +101,20 @@ const emission=el<HTMLInputElement>('emission'),bloom=el<HTMLInputElement>('bloo
 function updateRenderer(){renderer.setOptions({mode:renderMode.value as RendererMode,quality:quality.value as Quality,material:material.value as EyeMaterial,emission:Number(emission.value),bloom:Number(bloom.value)})}
 for(const input of [renderMode,quality,material,emission,bloom]){input.addEventListener('change',updateRenderer);if(input instanceof HTMLInputElement)input.addEventListener('input',updateRenderer)}
 updateRenderer();semantic.start();
+const startup=el('startup-permissions');
+const params=new URLSearchParams(location.search);
+startup.hidden=params.has('rage-demo')||params.has('mood-demo');
+el('startup-skip').onclick=()=>{startup.hidden=true};
+el('startup-enable').onclick=()=>{
+ startup.hidden=true;
+ // Invoke sensor permission APIs and media capture in the same trusted click.
+ const motion=enableMotion();
+ if(!navigator.mediaDevices){message='Media permissions unavailable';return}
+ const combined=navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:{channelCount:{ideal:2},echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+ const camera=enableCamera(combined.then(s=>new MediaStream(s.getVideoTracks())));
+ const mic=enableAudio(combined.then(s=>new MediaStream(s.getAudioTracks())));
+ void Promise.allSettled([motion,camera,mic]).then(()=>{message='Startup: camera '+(stream?.active?'on':'off')+' · microphone '+(audio.active?'on':'off')+' · motion '+(orientation?'on':'off')});
+};
 function showControls(show:boolean){controls.hidden=!show;stage.setAttribute('aria-expanded',String(show));hint.hidden=true;if(show)el('close-ui').focus({preventScroll:true});else stage.focus({preventScroll:true})}
 stage.addEventListener('click',()=>showControls(controls.hidden));
 stage.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();showControls(controls.hidden)}});
