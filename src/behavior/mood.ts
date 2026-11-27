@@ -9,20 +9,21 @@ export const moodLibrary={
  angry:{valence:-1,arousal:-.65,asymmetry:0,gestures:['stare','shake-off']},
  recovering:{valence:-.15,arousal:-.2,asymmetry:.04,gestures:['sigh','long-blink']}
 } as const;
+export const moodTuning={episodeGapMs:900,minimumJolt:.32,episodeGain:.105,episodeExtra:.025,decayPerSecond:.065} as const;
 export class MoodEngine {
  level=0;episodes=0;private last=-Infinity;private start=-Infinity;private lastStep=-Infinity;private stage:MoodStage='passive';private entered=0;
  disturb(now:number,strength=1){
-  if(strength<.18)return;
-  if(now-this.last>650){this.episodes++;this.start=now;this.level=clamp(this.level+.24,0,1)}
-  else this.level=clamp(this.level+Math.min(.035,Math.max(0,strength)*.008),0,Math.min(1,this.episodes*.26));
+  if(strength<moodTuning.minimumJolt)return;
+  if(now-this.last>moodTuning.episodeGapMs){this.episodes++;this.start=now;this.level=clamp(this.level+moodTuning.episodeGain,0,1)}
+  else this.level=clamp(this.level+Math.min(.004,Math.max(0,strength)*.001),0,Math.min(1,this.episodes*(moodTuning.episodeGain+moodTuning.episodeExtra)));
   this.last=now;
  }
  step(now:number,dt:number){
   const quiet=now-this.last>650;
-  if(quiet)this.level=Math.max(0,this.level-Math.max(0,Math.min(.1,dt))*.085);
+  if(quiet)this.level=Math.max(0,this.level-Math.max(0,Math.min(.1,dt))*moodTuning.decayPerSecond);
   if(this.level===0)this.episodes=0;
   const l=this.level;
-  const stage:MoodStage=l===0?'passive':!quiet&&now-this.start<450&&l<.3?'startled':l>=.8?'angry':l>=.6?'frustrated':l>=.4?'irritated':l>=.18?'uneasy':'recovering';
+  const stage:MoodStage=l===0?'passive':!quiet&&now-this.start<450&&l<.18?'startled':l>=.8?'angry':l>=.6?'frustrated':l>=.4?'irritated':l>=.18?'uneasy':'recovering';
   if(stage!==this.stage){this.stage=stage;this.entered=now}
   const age=Math.max(0,now-this.entered),phase=age%3200, pulse=(center:number,width:number)=>Math.max(0,1-Math.abs(phase-center)/width);
   const profile=moodLibrary[stage];const blend=stage==='passive'?0:stage==='startled'?1:Math.min(1,l*3);
