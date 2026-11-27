@@ -7,7 +7,8 @@ export class PhysicalReaction {
   const nx=clamp(x/9.81,-2,2),ny=clamp(y/9.81,-2,2);
   const impulseX=nx-this.ax,impulseY=ny-this.ay;
   const jolt=Math.max(Math.hypot(impulseX,impulseY),Math.abs(z)/9.81);
-  if(jolt>.18)this.mood.disturb(now,jolt);
+  const disturbance=Math.max(jolt,Math.max(0,Math.hypot(x,y,z)/9.81-.22)*.65,Math.max(0,Math.abs(rotation)/180-.25)*.6);
+  if(disturbance>.18)this.mood.disturb(now,disturbance);
   if(Math.hypot(impulseX,impulseY)>.12){this.vx=clamp(this.vx-impulseX*18,-18,18);this.vy=clamp(this.vy+impulseY*18,-18,18)}
   if(Math.abs(z)>3&&Math.hypot(x,y)<2){this.vy=clamp(this.vy+Math.sign(z)*Math.min(8,Math.abs(z)*.6),-18,18)}
   this.ax=nx;this.ay=ny;

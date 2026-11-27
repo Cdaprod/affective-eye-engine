@@ -9,17 +9,19 @@ export const moodLibrary={
  angry:{valence:-1,arousal:-.65,asymmetry:0,gestures:['stare','shake-off']},
  recovering:{valence:-.15,arousal:-.2,asymmetry:.04,gestures:['sigh','long-blink']}
 } as const;
-export const moodTuning={episodeGapMs:900,minimumJolt:.32,episodeGain:.105,episodeExtra:.025,decayPerSecond:.065} as const;
+export const moodTuning={episodeGapMs:900,minimumJolt:.18,episodeGain:.085,sustainedGain:.085,decayPerSecond:.075} as const;
 export class MoodEngine {
- level=0;episodes=0;private last=-Infinity;private start=-Infinity;private lastStep=-Infinity;private stage:MoodStage='passive';private entered=0;
+ level=0;episodes=0;private last=-Infinity;private start=-Infinity;private strength=0;private stage:MoodStage='passive';private entered=0;
  disturb(now:number,strength=1){
   if(strength<moodTuning.minimumJolt)return;
   if(now-this.last>moodTuning.episodeGapMs){this.episodes++;this.start=now;this.level=clamp(this.level+moodTuning.episodeGain,0,1)}
-  else this.level=clamp(this.level+Math.min(.004,Math.max(0,strength)*.001),0,Math.min(1,this.episodes*(moodTuning.episodeGain+moodTuning.episodeExtra)));
+  this.strength=clamp(strength,0,1);
   this.last=now;
  }
  step(now:number,dt:number){
   const quiet=now-this.last>650;
+  const elapsed=clamp(dt,0,.1);
+  if(!quiet&&now-this.last<250&&now-this.start>350)this.level=clamp(this.level+elapsed*moodTuning.sustainedGain*(.55+.45*this.strength),0,1);
   if(quiet)this.level=Math.max(0,this.level-Math.max(0,Math.min(.1,dt))*moodTuning.decayPerSecond);
   if(this.level===0)this.episodes=0;
   const l=this.level;
@@ -36,5 +38,5 @@ export class MoodEngine {
   if(stage==='recovering'){bounce=5*pulse(650,650);blink=.8*pulse(650,450)}
   return {stage,level:l,episodes:this.episodes,quiet,blend,valence:profile.valence,arousal:profile.arousal,asymmetry:profile.asymmetry,tilt,bounce,blink,gaze};
  }
- reset(){this.level=this.episodes=0;this.last=this.start=this.lastStep=-Infinity;this.stage='passive';this.entered=0}
+ reset(){this.level=this.episodes=0;this.strength=0;this.last=this.start=-Infinity;this.stage='passive';this.entered=0}
 }

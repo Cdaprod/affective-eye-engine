@@ -156,3 +156,5 @@ Frustration is persistent: disturbance extends a 3.5–8 second quiet hold, foll
 
 ## Mood progression
 The reusable `MoodEngine` and `moodLibrary` in `src/behavior/mood.ts` distinguish shake episodes separated by 900 ms of quiet. One episode is capped at 13% anger; repeated episodes add 10.5 percentage points plus limited sustained disturbance, with continuous decay at 6.5 points/s after quiet. Jolts below 0.32 normalized strength do not affect mood. Stage-specific procedural gestures and expression profiles feed the animation compositor independently of physical momentum. Full recovery takes about 15.4 seconds after quiet. These are initial tuning values.
+
+Mood tuning update: continuous qualifying motion now accumulates at up to 8.5 percentage points/s after a 350 ms grace period, in addition to an 8.5 point episode onset. No per-episode ceiling. Quiet decay is 7.5 points/s after 650 ms. Motion evidence includes acceleration changes, sustained linear acceleration and rotation; ordinary small signals are ignored. Physics integration is unchanged.
