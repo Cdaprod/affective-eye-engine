@@ -161,3 +161,5 @@ Mood tuning update: continuous qualifying motion now accumulates at up to 8.5 pe
 
 ### Micro-expressions
 `src/animation/micro-expressions.ts` exports a reusable transient gesture library and priority/cooldown scheduler. Motion onset, impacts, sustained disturbance, relief, speech onset and focus changes produce short expression overlays without changing persistent mood or color. Inspector reports the active micro-expression.
+
+Cooldown micro-expressions are selected by peak disturbance mood: minor events receive relief, while stronger events progress through residual annoyance, composure, resignation, cautious checking, relief and re-engagement. Later gestures wait for emotional decay thresholds; new disturbance cancels the recovery queue. The sequence does not modify mood or physics.
