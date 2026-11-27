@@ -23,6 +23,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Validate behavior
         run: npm test
+      - name: Validate social behavior lab
+        run: npm run lab
       - name: Render deterministic assets
         run: npm run render
       - name: Build multi-page inspector
@@ -35,6 +37,7 @@ jobs:
         run: |
           test -s dist/index.html
           test -s dist/gallery.html
+          test -s artifacts/lab-report.json
           test -s artifacts/contact-sheet.svg
           test -s artifacts/animations/attention-switch.svg
           test -s artifacts/cinematic/cinematic-neutral.png
