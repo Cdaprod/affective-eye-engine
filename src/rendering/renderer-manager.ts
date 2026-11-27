@@ -38,7 +38,8 @@ export class RendererManager {
   }
   this.onChange?.(this.activeMode);
  }
- render(frame:RenderFrame){
+ render(frame:RenderFrame,effects?:HTMLCanvasElement){
+  if(effects&&this.activeMode!=='svg')this.gl?.setEffects(effects);
   if(this.activeMode==='svg')this.svg?.render(frame);
   else {
    try{this.gl?.render(frame,this.options)}

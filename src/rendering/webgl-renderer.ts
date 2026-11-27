@@ -25,6 +25,7 @@ export class WebGLRenderer {
  private composer?:EffectComposer;
  private bloomPass?:UnrealBloomPass;
  private resizeObserver:ResizeObserver|undefined;
+ private effectsTexture?:THREE.CanvasTexture;
  private lost=false;
  private onLost:(event:Event)=>void;
  private onRestored:()=>void;
@@ -42,7 +43,7 @@ export class WebGLRenderer {
   this.material=new THREE.ShaderMaterial({vertexShader,fragmentShader,depthTest:false,depthWrite:false,uniforms:{
    uResolution:{value:new THREE.Vector2(640,300)},uGaze:{value:new THREE.Vector2()},
    uPhysical:{value:new THREE.Vector2()},uPhysicalWeight:{value:0},uVelocity:{value:new THREE.Vector2()},uOrientation:{value:new THREE.Vector2()},
-   uPowerUp:{value:0},uTime:{value:0},uProximity:{value:1},uFrustration:{value:0},uValence:{value:0},uArousal:{value:0},
+   uEffects:{value:null},uHasEffects:{value:0},uPowerUp:{value:0},uTime:{value:0},uProximity:{value:1},uFrustration:{value:0},uValence:{value:0},uArousal:{value:0},
    uBlink:{value:0},uAsymmetry:{value:0},uWink:{value:0},uTilt:{value:0},
    uBounce:{value:0},uStretch:{value:0},uEmission:{value:1},uBloom:{value:.45},
    uMaterial:{value:0}
@@ -78,6 +79,7 @@ export class WebGLRenderer {
  setQuality(value:Quality,ultra:boolean){
   this.quality=value;this.ultra=ultra;this.configurePostprocessing();this.resize();
  }
+ setEffects(canvas:HTMLCanvasElement){if(this.effectsTexture?.image!==canvas){this.effectsTexture?.dispose();this.effectsTexture=new THREE.CanvasTexture(canvas);this.material.uniforms.uEffects.value=this.effectsTexture}this.effectsTexture.needsUpdate=true;this.material.uniforms.uHasEffects.value=1;}
  render(frame:RenderFrame,options:{material:EyeMaterial;emission:number;bloom:number}){
   if(this.lost)return;
   const u=this.material.uniforms;
@@ -107,7 +109,7 @@ export class WebGLRenderer {
   this.canvas.removeEventListener('webglcontextlost',this.onLost);
   this.canvas.removeEventListener('webglcontextrestored',this.onRestored);
   this.composer?.dispose();
-  this.mesh.geometry.dispose();this.material.dispose();this.renderer.dispose();
+  this.effectsTexture?.dispose();this.mesh.geometry.dispose();this.material.dispose();this.renderer.dispose();
   this.canvas.remove();
  }
 }

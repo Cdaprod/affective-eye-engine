@@ -8,6 +8,8 @@ uniform vec2 uVelocity;
 uniform vec2 uOrientation;
 uniform float uTime;
 uniform float uPowerUp;
+uniform sampler2D uEffects;
+uniform float uHasEffects;
 uniform float uProximity;
 uniform float uValence;
 uniform float uFrustration;
@@ -33,7 +35,8 @@ void main(){
  vec3 background=vec3(.002,.005,.011);
  float ambient=exp(-dot(pixel / res * vec2(1.5,2.2),pixel / res * vec2(1.5,2.2))*5.0);
  background+=vec3(.005,.023,.035)*ambient*(.55+.12*uEmission);
- vec3 color=background;
+ vec4 fx=texture2D(uEffects,vUv);
+ vec3 color=mix(background,fx.rgb,fx.a*uHasEffects);
  for(int i=0;i<2;i++){
   float side=i==0?-1.0:1.0;
   float width=min(res.x*.087,res.y*.26)*uProximity;

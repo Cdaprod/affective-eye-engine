@@ -12,9 +12,9 @@ export class RageSequence {
  reset(){this.armed=true;this.since=-Infinity}
 }
 export class RageEffects {
- readonly sequence=new RageSequence();private canvas:HTMLCanvasElement;private ctx:CanvasRenderingContext2D|null;
- constructor(host:HTMLElement){this.canvas=document.createElement('canvas');this.canvas.setAttribute('aria-hidden','true');Object.assign(this.canvas.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'10'});host.insertAdjacentElement('afterend',this.canvas);this.ctx=this.canvas.getContext('2d')}
- draw(now:number,state:ReturnType<RageSequence['step']>,e:Eyes,svg:boolean){const c=this.ctx;if(!c)return state;const w=innerWidth,h=innerHeight;if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h}c.clearRect(0,0,w,h);const t=now/1000,scale=e.scale??1,mix=1-(e.physicalWeight??0),a=(Math.abs(e.tilt??0)+Math.abs(Math.min(0,e.valence))*18)*Math.PI/180;
+ readonly sequence=new RageSequence();readonly canvas:HTMLCanvasElement;private ctx:CanvasRenderingContext2D|null;
+ constructor(host:HTMLElement){this.canvas=document.createElement('canvas');this.canvas.setAttribute('aria-hidden','true');Object.assign(this.canvas.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'auto'});host.prepend(this.canvas);this.ctx=this.canvas.getContext('2d')}
+ draw(now:number,state:ReturnType<RageSequence['step']>,e:Eyes,svg:boolean){this.canvas.style.visibility=svg?'visible':'hidden';const c=this.ctx;if(!c)return state;const w=innerWidth,h=innerHeight;if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h}c.clearRect(0,0,w,h);const t=now/1000,scale=e.scale??1,mix=1-(e.physicalWeight??0),a=(Math.abs(e.tilt??0)+Math.abs(Math.min(0,e.valence))*18)*Math.PI/180;
  const ew=Math.min(w*.087,h*.26)*scale,eh=Math.min(h*.17,w*.15)*scale*(1+.45*e.arousal),gap=w*.205;
  const tx=Math.max(0,w/2-((gap+ew)*Math.abs(Math.cos(a))+eh*Math.abs(Math.sin(a)))*1.08-3),ty=Math.max(0,h/2-((gap+ew)*Math.abs(Math.sin(a))+eh*Math.abs(Math.cos(a)))*1.08-3);
  const k=Math.min(w/640,h/300);
@@ -30,10 +30,7 @@ export class RageEffects {
  if(state.phase==='super')for(const side of [-1,1]){c.beginPath();for(let j=0;j<7;j++){const xx=side*rx*(1.05+.12*Math.sin(j*4+t*9)),yy=ry*(1.3-j*.55);j?c.lineTo(xx,yy):c.moveTo(xx,yy)}c.strokeStyle='#fff3ac';c.lineWidth=3;c.stroke()}
  }
  if(state.steam>0)for(const side of [-1,1])for(let i=0;i<8;i++){const u=(t*.9+i/8)%1,xx=side*rx*(1+u*.7),yy=-ry*(.15+u*1.4);c.beginPath();c.arc(xx,yy,Math.max(4,ry*(.13+u*.35)),0,Math.PI*2);c.fillStyle='rgba(225,238,248,'+state.steam*(1-u)*.85+')';c.fill()}
- // Remove effects over the eye silhouettes, preserving the original opaque renderer.
- c.globalCompositeOperation='destination-out';
- for(const side of [-1,1]){c.save();c.translate(side*(svg?130*k:gap),0);c.rotate((svg?1:-1)*side*Math.min(0,e.valence)*Math.PI/10);const hw=svg?55*scale*k:ew,hh=svg?Math.max(3,(100+e.arousal*45)*scale*k/2):eh;const pad=Math.max(3,hw*.12);c.beginPath();c.roundRect(-hw-pad,-hh-pad,2*(hw+pad),2*(hh+pad),Math.min(hw*.5,hh*.5));c.fillStyle='#000';c.fill();c.restore()}
- c.globalCompositeOperation='source-over';c.restore();
+ c.restore();
  return state}
  reset(){this.sequence.reset();this.ctx?.clearRect(0,0,this.canvas.width,this.canvas.height)}
 }
