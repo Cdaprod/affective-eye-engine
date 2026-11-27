@@ -167,7 +167,7 @@ function frame(now:number){
  intentY=smooth(intentY,gazeResponse(clamp(gy-oy*.3)),dt,3.2);
  const activeChanged=visible?.id!==undefined&&visible.id!==previousFocus;previousFocus=visible?.id??null;
  const motion=director.step({intention:behavioral,gazeChanged:activeChanged,hand:hand?.name,time:now,dt,listeningTilt:listening.tilt,listeningArousal:listening.arousal});
- const rage=rageEffects.render(now,anger,reaction.disturbance);
+ const rage=rageEffects.sequence.step(now,anger,reaction.disturbance);
  const micro=microExpressions.step({now,disturbance:reaction.disturbance,impacts:reaction.impacts,anger,speech:listening.active,focusChanged:activeChanged});
  eyes={
   wink:smooth(eyes.wink??0,Math.max(motion.wink,w?em.wink:0)*(1-b),dt,6),
@@ -181,7 +181,8 @@ function frame(now:number){
   blink:Math.max(motion.blink,mood.blink,micro.blink,reaction.recovering?.25:0)
  };
  if(rage.phase==='charge'||rage.phase==='super'){eyes.arousal=.45;eyes.valence=-.85;eyes.tilt=clamp((eyes.tilt??0)+Math.sin(now/45)*4,-25,25);eyes.bounce=(eyes.bounce??0)+Math.sin(now/55)*3}else if(rage.phase==='exhausted'){eyes.arousal=-.8;eyes.blink=Math.max(eyes.blink,.3)}
- renderer.render(compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy}));
+ eyes.powerUp=rage.phase==='super'?1:rage.phase==='charge'?.5:0;
+ const composed=compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy});renderer.render(composed);rageEffects.draw(now,rage,composed,renderer.activeMode==='svg');
  el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Disturbance: '+reaction.disturbance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Rage FX: '+rage.phase+' | Micro: '+micro.name+' | Mood: '+mood.stage+' | Episodes: '+mood.episodes+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
  requestAnimationFrame(frame)
 }

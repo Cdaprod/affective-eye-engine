@@ -7,6 +7,7 @@ uniform float uPhysicalWeight;
 uniform vec2 uVelocity;
 uniform vec2 uOrientation;
 uniform float uTime;
+uniform float uPowerUp;
 uniform float uProximity;
 uniform float uValence;
 uniform float uFrustration;
@@ -70,6 +71,7 @@ void main(){
   float warm=smoothstep(.2,.6,uFrustration);
   float red=smoothstep(.65,.95,uFrustration);
   vec3 halo=mix(mix(mix(vec3(.015,.42,.63),vec3(.35,.65,.32),saturate(uFrustration*4.0)),vec3(.85,.27,.025),warm),vec3(.85,.015,.025),red)*outer*.30*uEmission;
+  halo=mix(halo,vec3(1.0,.65,.06)*outer*.5,uPowerUp);
   color+=halo;
   float edge=clamp(.8+fwidth(d),1.0,3.0);
   float coverage=1.0-smoothstep(-edge,edge,d);
@@ -89,6 +91,7 @@ void main(){
   // Subtle tactile glass rim and glint, not separate pupils or eyeballs.
   material+=vec3(.14,.42,.52)*smoothstep(-5.0,-.7,d)*rim*.28;
   material=mix(material,mix(mix(vec3(.55,.9,.65),vec3(1.0,.38,.035),warm),vec3(1.0,.018,.025),red)*(.65+.65*light)*max(.25,uEmission),anger);
+  material=mix(material,vec3(1.0,.78,.19)*(.85+.5*light),uPowerUp);
   color=mix(color,material+halo*.35,coverage);
  }
  // Low-amplitude filmic grading; no grain (avoid noisy OLED animation).
