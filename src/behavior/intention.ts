@@ -1,6 +1,6 @@
 export type Intention='resting'|'observing'|'engaged'|'listening'|'searching'|'acknowledging';
 export class IntentionEngine{
- private lastPerson=0;private lastSpeech=0;private seen=new Set<number>();private acknowledgementUntil=0;
+ private lastPerson=-Infinity;private lastSpeech=-Infinity;private seen=new Set<number>();private acknowledgementUntil=0;
  update(now:number,faces:number[],speaking:boolean){
   if(faces.length){this.lastPerson=now;for(const id of faces)if(!this.seen.has(id)){this.seen.add(id);this.acknowledgementUntil=now+650}}
   if(speaking)this.lastSpeech=now;
@@ -11,5 +11,5 @@ export class IntentionEngine{
   if(now-this.lastPerson<5000)return 'searching' as Intention;
   this.seen.clear();return 'resting' as Intention;
  }
- reset(){this.lastPerson=0;this.lastSpeech=0;this.acknowledgementUntil=0;this.seen.clear()}
+ reset(){this.lastPerson=-Infinity;this.lastSpeech=-Infinity;this.acknowledgementUntil=0;this.seen.clear()}
 }
