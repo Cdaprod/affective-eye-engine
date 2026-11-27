@@ -9,7 +9,7 @@ export const moodLibrary={
  angry:{valence:-1,arousal:-.65,asymmetry:0,gestures:['stare','shake-off']},
  recovering:{valence:-.15,arousal:-.2,asymmetry:.04,gestures:['sigh','long-blink']}
 } as const;
-export const moodTuning={episodeGapMs:900,minimumJolt:.18,episodeGain:.085,sustainedGain:.085,decayPerSecond:.075} as const;
+export const moodTuning={episodeGapMs:900,minimumJolt:.18,episodeGain:.085,sustainedGain:.085,decayPerSecond:.06} as const;
 export class MoodEngine {
  level=0;episodes=0;private last=-Infinity;private start=-Infinity;private strength=0;private stage:MoodStage='passive';private entered=0;
  disturb(now:number,strength=1){
@@ -21,14 +21,14 @@ export class MoodEngine {
  step(now:number,dt:number){
   const quiet=now-this.last>650;
   const elapsed=clamp(dt,0,.1);
-  if(!quiet&&now-this.last<250&&now-this.start>350)this.level=clamp(this.level+elapsed*moodTuning.sustainedGain*(.55+.45*this.strength),0,1);
+  if(!quiet&&now-this.last<500&&now-this.start>350)this.level=clamp(this.level+elapsed*moodTuning.sustainedGain*(.55+.45*this.strength),0,1);
   if(quiet)this.level=Math.max(0,this.level-Math.max(0,Math.min(.1,dt))*moodTuning.decayPerSecond);
   if(this.level===0)this.episodes=0;
   const l=this.level;
-  const stage:MoodStage=l===0?'passive':!quiet&&now-this.start<450&&l<.18?'startled':l>=.8?'angry':l>=.6?'frustrated':l>=.4?'irritated':l>=.18?'uneasy':'recovering';
+  const stage:MoodStage=l===0?'passive':!quiet&&l<.18?'startled':l>=.8?'angry':l>=.6?'frustrated':l>=.4?'irritated':l>=.18?'uneasy':'recovering';
   if(stage!==this.stage){this.stage=stage;this.entered=now}
   const age=Math.max(0,now-this.entered),phase=age%3200, pulse=(center:number,width:number)=>Math.max(0,1-Math.abs(phase-center)/width);
-  const profile=moodLibrary[stage];const blend=stage==='passive'?0:stage==='startled'?1:Math.min(1,l*3);
+  const profile=moodLibrary[stage];const blend=stage==='passive'?0:stage==='startled'?1:Math.min(1,l*4);
   let tilt=0,bounce=0,blink=0,gaze=0;
   if(stage==='startled'){bounce=-12*Math.sin(Math.PI*Math.min(1,age/450));blink=Math.max(pulse(160,65),pulse(340,65))}
   if(stage==='uneasy'){gaze=.22*Math.sin(age/550);tilt=5*Math.sin(age/700)}

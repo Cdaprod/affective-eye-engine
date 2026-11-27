@@ -149,6 +149,7 @@ function frame(now:number){
  const base=presets[select.value],auto=el<HTMLInputElement>('auto-emotes').checked,em=emotes.update(visible,now);
  const reaction=physical.step(now,dt);
  const anger=reaction.frustration,mood=reaction.mood,b=mood.blend;
+ if(new URLSearchParams(location.search).has('mood-demo')){const phase=(now%24000)/1000; if(phase<12)physical.mood.disturb(now,1)}
  const w=auto&&!listening.active?em.weight*.5*(1-reaction.weight)*(1-anger):0;
  const valence=clamp(base.valence+personalityState.valence*.45+(em.valence-base.valence)*w+(semanticIntent==='happy'?.3:0));
  const arousal=clamp(base.arousal+personalityState.arousal*.5+(em.arousal-base.arousal)*w);
@@ -163,14 +164,14 @@ function frame(now:number){
  const motion=director.step({intention:behavioral,gazeChanged:activeChanged,hand:hand?.name,time:now,dt,listeningTilt:listening.tilt,listeningArousal:listening.arousal});
  eyes={
   wink:smooth(eyes.wink??0,Math.max(motion.wink,w?em.wink:0)*(1-b),dt,6),
-  tilt:clamp((listening.active?motion.tilt:w?em.tilt:intention==='searching'?3:0)*(1-reaction.weight)*(1-b)+mood.tilt*(1-reaction.weight)+reaction.tilt,-25,25),
-  bounce:smooth(eyes.bounce??0,(motion.bounce+(w?em.bounce:0))*(1-b)+mood.bounce*(1-reaction.weight),dt,4),
+  tilt:clamp((listening.active?motion.tilt:w?em.tilt:intention==='searching'?3:0)*(1-reaction.weight)*(1-b)+mood.tilt*(1-.5*reaction.weight)+reaction.tilt,-25,25),
+  bounce:smooth(eyes.bounce??0,(motion.bounce+(w?em.bounce:0))*(1-b)+mood.bounce*(1-.5*reaction.weight),dt,4),
   scale:smooth(eyes.scale??1,t?proximityScale(t.size):1,dt,2),
   x:gazeX.step(clamp(intentX+mood.gaze*(1-reaction.weight)),dt),y:gazeY.step(intentY,dt),physicalX:reaction.x,physicalY:reaction.y,physicalWeight:reaction.weight,frustration:smooth(eyes.frustration??0,anger,dt,anger>(eyes.frustration??0)?5:1.5),
   valence:smooth(eyes.valence,clamp(valence*(1-b)+mood.valence*b),dt,5),
   arousal:smooth(eyes.arousal,clamp((arousal+motion.arousal)*(1-b)+mood.arousal*b),dt,4),
   asymmetry:smooth(eyes.asymmetry,asymmetry*(1-b)+mood.asymmetry*b,dt,2),
-  blink:Math.max(motion.blink,mood.blink*(1-reaction.weight),reaction.recovering?.25:0)
+  blink:Math.max(motion.blink,mood.blink,reaction.recovering?.25:0)
  };
  renderer.render(compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy}));
  el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Impacts: '+reaction.impacts+' | Mood: '+mood.stage+' | Episodes: '+mood.episodes+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
