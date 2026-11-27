@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {PhysicalReaction} from '../src/behavior/physical-reaction.ts';
+test('gentle motion does not accumulate frustration',()=>{const p=new PhysicalReaction();for(let t=0;t<5000;t+=16){p.ingest(.2,.2,3,t);assert.equal(p.step(t,.016).frustration,0)}});
+test('repeated motion triggers bounded recovery and settles',()=>{const p=new PhysicalReaction();let recovered=false;for(let t=0;t<5000;t+=16){p.ingest(12*Math.sin(t/100),10,180,t);const s=p.step(t,.016);recovered ||=s.recovering;assert.ok(Math.abs(s.x)<=.8&&Math.abs(s.tilt)<=24)}assert.ok(recovered);let s=p.step(5000,.016);for(let t=5016;t<15000;t+=16)s=p.step(t,.016);assert.equal(s.frustration,0);assert.ok(Math.abs(s.x)<.01);p.reset()});
