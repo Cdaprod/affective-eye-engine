@@ -90,6 +90,8 @@ let last=performance.now(),eyes:Eyes={x:0,y:0,valence:0,arousal:0,blink:0,asymme
 el('snapshot').onclick=()=>{const blob=new Blob([eyeSVG(eyes)],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='affective-eye-'+select.value+'.svg';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 const stage=el('eyes'),controls=el('controls'),hint=el('hint');
 const rageEffects=new RageEffects(stage);
+el('preview-rage').onclick=()=>{rageEffects.sequence.preview(performance.now());showControls(false)};
+if(new URLSearchParams(location.search).has('rage-demo'))rageEffects.sequence.preview(performance.now()+500);
 const renderer=new RendererManager(stage,mode=>{stage.dataset.renderer=mode});
 const renderMode=el<HTMLSelectElement>('render-mode'),quality=el<HTMLSelectElement>('quality'),material=el<HTMLSelectElement>('material');
 const emission=el<HTMLInputElement>('emission'),bloom=el<HTMLInputElement>('bloom');
