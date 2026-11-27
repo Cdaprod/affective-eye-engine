@@ -3,11 +3,11 @@ export type Detection=Omit<Target,'id'|'seen'>;
 export const clamp=(x:number,min=-1,max=1)=>Math.max(min,Math.min(max,x));
 export const smooth=(x:number,y:number,dt:number,k=8)=>x+(y-x)*(1-Math.exp(-k*dt));
 // Amplify small camera offsets while retaining a bounded, continuous response.
-export const gazeResponse=(x:number)=>Math.tanh(5.5*x)/Math.tanh(5.5);
+export const gazeResponse=(x:number)=>Math.tanh(3.2*x)/Math.tanh(3.2);
 export class GazeSpring {
  position=0; velocity=0;
  step(target:number,dt:number){
-  target=clamp(target); const w=14,z=.78,b=w*Math.sqrt(1-z*z);
+  target=clamp(target); const w=12,z=.95,b=w*Math.sqrt(1-z*z);
   const a=this.position-target,c=(this.velocity+z*w*a)/b;
   const decay=Math.exp(-z*w*dt),co=Math.cos(b*dt),si=Math.sin(b*dt);
   const offset=decay*(a*co+c*si);
@@ -19,7 +19,7 @@ export class GazeSpring {
 }
 export class Tracker {
  targets:Target[]=[]; next=1;
- update(ds:Detection[],now:number){const old=this.targets.filter(t=>now-t.seen<800), used=new Set<number>();const fresh=ds.map(d=>{const t=old.filter(t=>!used.has(t.id)).sort((a,b)=>Math.hypot(a.x-d.x,a.y-d.y)-Math.hypot(b.x-d.x,b.y-d.y))[0];const id=t&&Math.hypot(t.x-d.x,t.y-d.y)<.45?t.id:this.next++;used.add(id);const prev=id===t?.id?t:undefined;const dt=prev?Math.max(.001,(now-prev.seen)/1000):0;const filter=(a:number,b:number)=>Math.abs(a-b)<.012?a:smooth(a,b,dt,5+18*Math.min(1,Math.abs(a-b)));return {...d,x:prev?filter(prev.x,d.x):d.x,y:prev?filter(prev.y,d.y):d.y,size:prev?smooth(prev.size,d.size,dt,5):d.size,id,seen:now}});this.targets=[...fresh,...old.filter(t=>!used.has(t.id))];return fresh;}
+ update(ds:Detection[],now:number){const old=this.targets.filter(t=>now-t.seen<800), used=new Set<number>();const fresh=ds.map(d=>{const t=old.filter(t=>!used.has(t.id)).sort((a,b)=>Math.hypot(a.x-d.x,a.y-d.y)-Math.hypot(b.x-d.x,b.y-d.y))[0];const id=t&&Math.hypot(t.x-d.x,t.y-d.y)<.45?t.id:this.next++;used.add(id);const prev=id===t?.id?t:undefined;const dt=prev?Math.max(.001,(now-prev.seen)/1000):0;const filter=(a:number,b:number)=>Math.abs(a-b)<.018?a:smooth(a,b,dt,4+10*Math.min(1,Math.abs(a-b)));return {...d,x:prev?filter(prev.x,d.x):d.x,y:prev?filter(prev.y,d.y):d.y,size:prev?smooth(prev.size,d.size,dt,5):d.size,id,seen:now}});this.targets=[...fresh,...old.filter(t=>!used.has(t.id))];return fresh;}
 }
 export class Attention {active:number|null=null; since=0; choose(ts:Target[],now:number){if(!ts.length){this.active=null;return undefined}const current=ts.find(t=>t.id===this.active);let next=current;if(!current||now-this.since>2600){const ordered=[...ts].sort((a,b)=>a.id-b.id);next=current?ordered[(ordered.indexOf(current)+1)%ordered.length]:[...ts].sort((a,b)=>b.size-a.size)[0];this.active=next.id;this.since=now}return next;}}
 export type Eyes={powerUp?:number;x:number,y:number,valence:number,arousal:number,blink:number,asymmetry:number;scale?:number;wink?:number;tilt?:number;bounce?:number;physicalX?:number;physicalY?:number;physicalWeight?:number;frustration?:number};

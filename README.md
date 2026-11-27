@@ -166,3 +166,6 @@ Cooldown micro-expressions are selected by peak disturbance mood: minor events r
 
 ### Rage transformation
 At 93% frustration with active disturbance, a one-shot anime-inspired golden aura charges, powers up, vents steam and enters exhaustion. The canvas overlay is independent of the eye renderer; it rearms below 35% frustration. Recovery adds exhaustion and sigh gestures. No rapid full-screen flashes or audio effects.
+
+### Foreground interaction lifecycle
+Backgrounding or leaving the page stops media tracks, motion listeners, perception workers and animation frames. Returning presents the unified opt-in again; browser-native permission decisions may be remembered. Gaze, orientation and expression transitions use damped filtering; speaker evidence uses inference timestamps and preserves detector-only mouth motion. Physical impulses remain independent.

@@ -27,6 +27,7 @@ const ctx=patch.getContext('2d',{willReadFrequently:true});
 const faceSignals=new Map<number,FaceSignal>();
 let targets:Target[]=[],stream:MediaStream|undefined,generation=0,orientation=false,ox=0,oy=0,sim=false,handsOn=false;
 let lastVision=-1,lastDetect=-Infinity,message='Manual mode',presenceSince=0,missingSince=0,engaged=false,held:Target|undefined,previousFocus:number|null=null;
+let lastSpeakerAt=0,lastStatus=0,poseX=0,poseY=0;
 let intention='resting',intentX=0,intentY=0,qualityFps=60;
 const select=el<HTMLSelectElement>('preset');for(const name of Object.keys(presets))select.add(new Option(name,name));
 const physical=new PhysicalReaction(),microExpressions=new MicroExpressions();let lastMotion=-Infinity,lastPose:{beta:number;gamma:number;at:number}|undefined;
@@ -52,13 +53,13 @@ function stop(keepAudio=false){
  if(!keepAudio){voice.stop();audio.stop();gestures.reset()}
  window.removeEventListener('deviceorientation',orient);window.removeEventListener('devicemotion',deviceMotion);physical.reset();microExpressions.reset();rageEffects.reset();gravity=undefined;motionCount=0;motionMagnitude=0;motionSource='waiting';lastPose=undefined;lastMotion=-Infinity;orientation=false;ox=oy=0;
  targets=[];tracker.targets=[];attention.reset();mouth.reset();speaker.clear();emotes.reset();personality.reset();intentions.reset();director.reset();faceSignals.clear();
- presenceSince=missingSince=0;engaged=false;held=undefined;previousFocus=null;intentX=intentY=0;lastVision=-1;lastDetect=-Infinity;message='Sensors stopped';
+ lastSpeakerAt=0;poseX=poseY=0;presenceSince=missingSince=0;engaged=false;held=undefined;previousFocus=null;intentX=intentY=0;lastVision=-1;lastDetect=-Infinity;message='Sensors stopped';
 }
 el('stop').onclick=()=>stop();
-window.addEventListener('pagehide',()=>{stop();semantic.stop();renderer.dispose()});
+
 async function enableAudio(provided?:Promise<MediaStream>){
  if(audio.active){voice.stop();audio.stop();gestures.reset();message='Microphone off';return}
- try{await audio.start(provided);const s=audio.mediaStream;if(s){message='Microphone active; initializing neural voice detection';void voice.start(s).then(()=>{message=voice.enabled?'Neural voice detection active':'Acoustic fallback active'}).catch(()=>{message='Acoustic fallback active'})}}
+ try{await audio.start(provided);const s=audio.mediaStream;if(s&&!document.hidden){message='Microphone active; initializing neural voice detection';void voice.start(s).then(()=>{message=voice.enabled?'Neural voice detection active':'Acoustic fallback active'}).catch(()=>{message='Acoustic fallback active'})}}
  catch(err){message=String(err)}
 }
 el('audio').onclick=()=>enableAudio();
@@ -73,7 +74,7 @@ async function enableCamera(provided?:Promise<MediaStream>){
   stream=s;
   const track=s.getVideoTracks()[0];try{const caps=track.getCapabilities?.() as MediaTrackCapabilities & {zoom?:{min:number}};if(caps?.zoom)await track.applyConstraints({advanced:[{zoom:caps.zoom.min} as MediaTrackConstraintSet]})}catch{}
   video.srcObject=s;await video.play();
-  if(token!==generation)return;
+  if(token!==generation||document.hidden)return;
   message='Camera initializing: facial landmarks / worker / detector fallback';
   await vision.start();
   if(token===generation)message='Camera active · '+video.videoWidth+'×'+video.videoHeight+' · '+vision.snapshot.mode;
@@ -85,7 +86,7 @@ el('gestures').onclick=async()=>{
  if(!stream?.active){message='Enable camera before gestures';return}
  const token=generation;try{await hands.start();if(token!==generation){hands.close();return}handsOn=true;message='Hand gestures enabled'}catch(err){message='Hand gestures unavailable: '+String(err)}
 };
-async function enableMotion(){try{const D=window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {requestPermission?:()=>Promise<string>};const M=window.DeviceMotionEvent as typeof DeviceMotionEvent & {requestPermission?:()=>Promise<string>};const permissions=await Promise.allSettled([D?.requestPermission?.()??Promise.resolve(D?'granted':'unavailable'),M?.requestPermission?.()??Promise.resolve(M?'granted':'unavailable')]);if(!permissions.some(p=>p.status==='fulfilled'&&p.value==='granted'))throw Error('Motion permission denied');window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true;message='Physical interaction enabled';el('motion').textContent='Motion enabled — tap to retry'}catch(err){message=String(err)}}
+async function enableMotion(){const token=generation;try{const D=window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {requestPermission?:()=>Promise<string>};const M=window.DeviceMotionEvent as typeof DeviceMotionEvent & {requestPermission?:()=>Promise<string>};const permissions=await Promise.allSettled([D?.requestPermission?.()??Promise.resolve(D?'granted':'unavailable'),M?.requestPermission?.()??Promise.resolve(M?'granted':'unavailable')]);if(token!==generation||document.hidden)return;if(!permissions.some(p=>p.status==='fulfilled'&&p.value==='granted'))throw Error('Motion permission denied');window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true;message='Physical interaction enabled';el('motion').textContent='Motion enabled — tap to retry'}catch(err){message=String(err)}}
 el('motion').onclick=()=>enableMotion();
 el('sim').onclick=()=>{const enable=!sim;stop();sim=enable;message=sim?'Three-person simulation':'Manual mode'};
 const gazeX=new GazeSpring(),gazeY=new GazeSpring(),compositor=new AnimationCompositor();
@@ -103,14 +104,21 @@ for(const input of [renderMode,quality,material,emission,bloom]){input.addEventL
 updateRenderer();semantic.start();
 const startup=el('startup-permissions');
 const params=new URLSearchParams(location.search);
-startup.hidden=params.has('rage-demo')||params.has('mood-demo');
+const demo=params.has('rage-demo')||params.has('mood-demo');
+startup.hidden=demo;
+let raf=0,suspended=false;
+function suspend(){if(suspended)return;suspended=true;cancelAnimationFrame(raf);stop();semantic.stop();gazeX.position=gazeX.velocity=gazeY.position=gazeY.velocity=0;compositor.reset();eyes={x:0,y:0,valence:0,arousal:0,blink:0,asymmetry:0};startup.hidden=demo;controls.hidden=true;}
+function resume(){if(document.hidden||!suspended)return;suspended=false;last=performance.now();semantic.start();startup.hidden=demo;raf=requestAnimationFrame(frame);}
+document.addEventListener('visibilitychange',()=>document.hidden?suspend():resume());
+window.addEventListener('pagehide',suspend);window.addEventListener('pageshow',resume);
 el('startup-skip').onclick=()=>{startup.hidden=true};
 el('startup-enable').onclick=()=>{
  startup.hidden=true;
  // Invoke sensor permission APIs and media capture in the same trusted click.
  const motion=enableMotion();
  if(!navigator.mediaDevices){message='Media permissions unavailable';return}
- const combined=navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:{channelCount:{ideal:2},echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+ const token=generation;
+ const combined=navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:{channelCount:{ideal:2},echoCancellation:false,noiseSuppression:false,autoGainControl:false}}).then(s=>{if(token!==generation||document.hidden){s.getTracks().forEach(t=>t.stop());throw Error('Permission session ended')}return s});
  const camera=enableCamera(combined.then(s=>new MediaStream(s.getVideoTracks())));
  const mic=enableAudio(combined.then(s=>new MediaStream(s.getAudioTracks())));
  void Promise.allSettled([motion,camera,mic]).then(()=>{message='Startup: camera '+(stream?.active?'on':'off')+' · microphone '+(audio.active?'on':'off')+' · motion '+(orientation?'on':'off')});
@@ -125,6 +133,7 @@ const full=el<HTMLButtonElement>('fullscreen');if(!document.documentElement.requ
 full.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();showControls(false)}catch{message='Fullscreen unavailable in this browser'}};
 document.addEventListener('fullscreenchange',()=>{full.textContent=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen'});
 function frame(now:number){
+ if(document.hidden||suspended){suspend();return}
  const dt=Math.min(.1,Math.max(.001,(now-last)/1000));last=now;qualityFps=smooth(qualityFps,Math.min(120,1/dt),dt,1);
  if(stream?.active&&video.readyState>=2){
   try{
@@ -154,7 +163,7 @@ function frame(now:number){
  const acoustic={...sound,activity:voice.enabled?speech.probability:sound.activity};
  const listening=gestures.update(acoustic,now,dt);
  const jaw=new Map<number,number>();for(const [id,signal] of faceSignals)jaw.set(id,signal.jaw);
- if(lastVision>0&&lastDetect===now){const visual=speaker.update(fresh,jaw,speech.probability,now,dt);for(const [id,score] of visual)mouth.scores.set(id,score)}
+ if(lastVision>0&&lastDetect===now&&jaw.size){const sampleDt=lastSpeakerAt?Math.min(.5,(now-lastSpeakerAt)/1000):.1;lastSpeakerAt=now;const visual=speaker.update(fresh,jaw,speech.probability,now,sampleDt);for(const [id,score] of visual)mouth.scores.set(id,score)}
  const visible=attention.choose(fresh,acoustic,mouth.scores,now,dt);
  if(visible){missingSince=0;if(!presenceSince)presenceSince=now;if(engaged||now-presenceSince>300){engaged=true;held=visible}}
  else{presenceSince=0;if(!missingSince)missingSince=now}
@@ -180,15 +189,16 @@ function frame(now:number){
  const gx=t?t.x*fade:stream?.active||audio.active?0:+el<HTMLInputElement>('x').value;
  const gy=t?t.y*fade:stream?.active?0:+el<HTMLInputElement>('y').value;
  const fusedX=!visible&&listening.active&&sound.directional?gx+(sound.pan-gx)*sound.activity*.5:gx;
- intentX=smooth(intentX,gazeResponse(clamp(fusedX-ox*.3)),dt,listening.active?8:3.2);
- intentY=smooth(intentY,gazeResponse(clamp(gy-oy*.3)),dt,3.2);
+ poseX=smooth(poseX,ox,dt,4);poseY=smooth(poseY,oy,dt,4);
+ intentX=smooth(intentX,gazeResponse(clamp(fusedX-poseX*.18)),dt,listening.active?5:3.5);
+ intentY=smooth(intentY,gazeResponse(clamp(gy-poseY*.18)),dt,3.2);
  const activeChanged=visible?.id!==undefined&&visible.id!==previousFocus;previousFocus=visible?.id??null;
  const motion=director.step({intention:behavioral,gazeChanged:activeChanged,hand:hand?.name,time:now,dt,listeningTilt:listening.tilt,listeningArousal:listening.arousal});
  const rage=rageEffects.sequence.step(now,anger,reaction.disturbance);
  const micro=microExpressions.step({now,disturbance:reaction.disturbance,impacts:reaction.impacts,anger,speech:listening.active,focusChanged:activeChanged});
  eyes={
   wink:smooth(eyes.wink??0,Math.max(motion.wink,w?em.wink:0)*(1-b),dt,6),
-  tilt:clamp((listening.active?motion.tilt:w?em.tilt:intention==='searching'?3:0)*(1-reaction.weight)*(1-b)+mood.tilt*(1-.5*reaction.weight)+reaction.tilt+micro.tilt,-25,25),
+  tilt:smooth(eyes.tilt??0,clamp((listening.active?motion.tilt:w?em.tilt:intention==='searching'?3:0)*(1-reaction.weight)*(1-b)+mood.tilt*(1-.5*reaction.weight)+reaction.tilt+micro.tilt,-25,25),dt,10),
   bounce:smooth(eyes.bounce??0,(motion.bounce+(w?em.bounce:0))*(1-b)+mood.bounce*(1-.5*reaction.weight)+micro.bounce,dt,12),
   scale:smooth(eyes.scale??1,t?proximityScale(t.size):1,dt,2),
   x:gazeX.step(clamp(intentX+mood.gaze*(1-reaction.weight)),dt),y:gazeY.step(intentY,dt),physicalX:reaction.x,physicalY:reaction.y,physicalWeight:reaction.weight,frustration:smooth(eyes.frustration??0,anger,dt,anger>(eyes.frustration??0)?5:1.5),
@@ -197,10 +207,10 @@ function frame(now:number){
   asymmetry:smooth(eyes.asymmetry,clamp(asymmetry*(1-b)+mood.asymmetry*b+micro.asymmetry,0,1),dt,12),
   blink:Math.max(motion.blink,mood.blink,micro.blink,reaction.recovering?.25:0)
  };
- if(rage.phase==='charge'||rage.phase==='super'){eyes.arousal=.45;eyes.valence=-.85;eyes.tilt=clamp((eyes.tilt??0)+Math.sin(now/45)*4,-25,25);eyes.bounce=(eyes.bounce??0)+Math.sin(now/55)*3}else if(rage.phase==='exhausted'){eyes.arousal=-.8;eyes.blink=Math.max(eyes.blink,.3)}
- eyes.powerUp=rage.phase==='super'?1:rage.phase==='charge'?.5:0;
+ if(rage.phase==='charge'||rage.phase==='super'){eyes.arousal=smooth(eyes.arousal,.45,dt,8);eyes.valence=smooth(eyes.valence,-.85,dt,8);eyes.tilt=clamp((eyes.tilt??0)+Math.sin(now/45)*4,-25,25);eyes.bounce=(eyes.bounce??0)+Math.sin(now/55)*3}else if(rage.phase==='exhausted'){eyes.arousal=smooth(eyes.arousal,-.8,dt,5);eyes.blink=Math.max(eyes.blink,.3)}
+ eyes.powerUp=smooth(eyes.powerUp??0,rage.phase==='super'?1:rage.phase==='charge'?.5:0,dt,7);
  const composed=compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy});rageEffects.draw(now,rage,composed,renderer.activeMode==='svg');renderer.render(composed,rageEffects.canvas);
- el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Disturbance: '+reaction.disturbance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Rage FX: '+rage.phase+' | Micro: '+micro.name+' | Mood: '+mood.stage+' | Episodes: '+mood.episodes+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
- requestAnimationFrame(frame)
+ if(!controls.hidden&&now-lastStatus>250){lastStatus=now;el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Disturbance: '+reaction.disturbance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Rage FX: '+rage.phase+' | Micro: '+micro.name+' | Mood: '+mood.stage+' | Episodes: '+mood.episodes+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;}
+ raf=requestAnimationFrame(frame)
 }
-requestAnimationFrame(frame);
+if(document.hidden)suspend();else raf=requestAnimationFrame(frame);

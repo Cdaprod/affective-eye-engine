@@ -53,11 +53,11 @@ export class VisionPipeline {
   if(this.closed||video.readyState<2||now-this.lastRequest<100||this.pending)return this.last;
   this.lastRequest=now;
   if(this.worker){
-   this.pending=true;
+   this.pending=true;const token=this.token;
    void createImageBitmap(video).then(bitmap=>{
-    if(this.closed||!this.worker){bitmap.close();this.pending=false;return}
+    if(this.closed||token!==this.token||!this.worker){bitmap.close();return}
     this.worker.postMessage({type:'frame',bitmap,timestamp:now},[bitmap]);
-   }).catch(()=>{this.pending=false});
+   }).catch(()=>{if(token===this.token)this.pending=false});
    return this.last;
   }
   if(this.landmarker){
