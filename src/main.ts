@@ -1,3 +1,4 @@
+import {RageEffects} from './animation/rage-effects';
 import {MicroExpressions} from './animation/micro-expressions';
 import {PhysicalReaction} from './behavior/physical-reaction';
 import {VisionPipeline} from './perception/vision/vision-pipeline';
@@ -49,7 +50,7 @@ function orient(ev:DeviceOrientationEvent){ox=clamp((ev.gamma??0)/45);oy=clamp((
 function stop(keepAudio=false){
  generation++;sim=false;stream?.getTracks().forEach(t=>t.stop());stream=undefined;video.pause();video.srcObject=null;vision.close();hands.close();handsOn=false;
  if(!keepAudio){voice.stop();audio.stop();gestures.reset()}
- window.removeEventListener('deviceorientation',orient);window.removeEventListener('devicemotion',deviceMotion);physical.reset();microExpressions.reset();gravity=undefined;motionCount=0;motionMagnitude=0;motionSource='waiting';lastPose=undefined;lastMotion=-Infinity;orientation=false;ox=oy=0;
+ window.removeEventListener('deviceorientation',orient);window.removeEventListener('devicemotion',deviceMotion);physical.reset();microExpressions.reset();rageEffects.reset();gravity=undefined;motionCount=0;motionMagnitude=0;motionSource='waiting';lastPose=undefined;lastMotion=-Infinity;orientation=false;ox=oy=0;
  targets=[];tracker.targets=[];attention.reset();mouth.reset();speaker.clear();emotes.reset();personality.reset();intentions.reset();director.reset();faceSignals.clear();
  presenceSince=missingSince=0;engaged=false;held=undefined;previousFocus=null;intentX=intentY=0;lastVision=-1;lastDetect=-Infinity;message='Sensors stopped';
 }
@@ -88,6 +89,7 @@ const gazeX=new GazeSpring(),gazeY=new GazeSpring(),compositor=new AnimationComp
 let last=performance.now(),eyes:Eyes={x:0,y:0,valence:0,arousal:0,blink:0,asymmetry:0};
 el('snapshot').onclick=()=>{const blob=new Blob([eyeSVG(eyes)],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='affective-eye-'+select.value+'.svg';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 const stage=el('eyes'),controls=el('controls'),hint=el('hint');
+const rageEffects=new RageEffects(stage);
 const renderer=new RendererManager(stage,mode=>{stage.dataset.renderer=mode});
 const renderMode=el<HTMLSelectElement>('render-mode'),quality=el<HTMLSelectElement>('quality'),material=el<HTMLSelectElement>('material');
 const emission=el<HTMLInputElement>('emission'),bloom=el<HTMLInputElement>('bloom');
@@ -163,6 +165,7 @@ function frame(now:number){
  intentY=smooth(intentY,gazeResponse(clamp(gy-oy*.3)),dt,3.2);
  const activeChanged=visible?.id!==undefined&&visible.id!==previousFocus;previousFocus=visible?.id??null;
  const motion=director.step({intention:behavioral,gazeChanged:activeChanged,hand:hand?.name,time:now,dt,listeningTilt:listening.tilt,listeningArousal:listening.arousal});
+ const rage=rageEffects.render(now,anger,reaction.disturbance);
  const micro=microExpressions.step({now,disturbance:reaction.disturbance,impacts:reaction.impacts,anger,speech:listening.active,focusChanged:activeChanged});
  eyes={
   wink:smooth(eyes.wink??0,Math.max(motion.wink,w?em.wink:0)*(1-b),dt,6),
@@ -175,8 +178,9 @@ function frame(now:number){
   asymmetry:smooth(eyes.asymmetry,clamp(asymmetry*(1-b)+mood.asymmetry*b+micro.asymmetry,0,1),dt,12),
   blink:Math.max(motion.blink,mood.blink,micro.blink,reaction.recovering?.25:0)
  };
+ if(rage.phase==='charge'||rage.phase==='super'){eyes.arousal=.45;eyes.valence=-.85;eyes.tilt=clamp((eyes.tilt??0)+Math.sin(now/45)*4,-25,25);eyes.bounce=(eyes.bounce??0)+Math.sin(now/55)*3}else if(rage.phase==='exhausted'){eyes.arousal=-.8;eyes.blink=Math.max(eyes.blink,.3)}
  renderer.render(compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy}));
- el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Disturbance: '+reaction.disturbance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Micro: '+micro.name+' | Mood: '+mood.stage+' | Episodes: '+mood.episodes+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
+ el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Motion: '+(orientation?motionSource+' '+motionCount+' events · '+motionMagnitude.toFixed(1)+' m/s² · '+(now-lastMotion<500?'live':'stale'):'off')+' | Disturbance: '+reaction.disturbance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Rage FX: '+rage.phase+' | Micro: '+micro.name+' | Mood: '+mood.stage+' | Episodes: '+mood.episodes+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
  requestAnimationFrame(frame)
 }
 requestAnimationFrame(frame);

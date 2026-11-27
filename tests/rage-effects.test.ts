@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {RageSequence} from '../src/animation/rage-effects.ts';
+test('rage is a bounded one-shot with vent and exhaustion',()=>{const r=new RageSequence();assert.equal(r.step(0,.8,1).phase,'none');assert.equal(r.step(100,.95,1).phase,'charge');assert.equal(r.step(1000,1,1).phase,'super');assert.equal(r.step(3000,1,0).phase,'vent');assert.equal(r.step(5000,.7,0).phase,'exhausted');assert.equal(r.step(7000,1,1).phase,'none');r.step(8000,.2,0);assert.equal(r.step(9000,.95,1).phase,'charge')});

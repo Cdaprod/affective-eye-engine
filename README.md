@@ -163,3 +163,6 @@ Mood tuning update: continuous qualifying motion now accumulates at up to 8.5 pe
 `src/animation/micro-expressions.ts` exports a reusable transient gesture library and priority/cooldown scheduler. Motion onset, impacts, sustained disturbance, relief, speech onset and focus changes produce short expression overlays without changing persistent mood or color. Inspector reports the active micro-expression.
 
 Cooldown micro-expressions are selected by peak disturbance mood: minor events receive relief, while stronger events progress through residual annoyance, composure, resignation, cautious checking, relief and re-engagement. Later gestures wait for emotional decay thresholds; new disturbance cancels the recovery queue. The sequence does not modify mood or physics.
+
+### Rage transformation
+At 93% frustration with active disturbance, a one-shot anime-inspired golden aura charges, powers up, vents steam and enters exhaustion. The canvas overlay is independent of the eye renderer; it rearms below 35% frustration. Recovery adds exhaustion and sigh gestures. No rapid full-screen flashes or audio effects.

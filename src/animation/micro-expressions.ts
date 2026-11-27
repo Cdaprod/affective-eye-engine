@@ -7,6 +7,8 @@ export const microLibrary={
  disapproval:{duration:850,priority:3,arousal:-.35,valence:-.35,asymmetry:.12,blink:.2,tilt:5,bounce:0},
  impatience:{duration:360,priority:3,arousal:-.2,valence:-.18,asymmetry:.2,blink:.3,tilt:4,bounce:0},
  relief:{duration:1250,priority:3,arousal:-.25,valence:.18,asymmetry:0,blink:.55,tilt:0,bounce:5},
+ exhausted:{duration:1400,priority:4,arousal:-.55,valence:-.12,asymmetry:.08,blink:.65,tilt:2,bounce:8},
+ doubleSigh:{duration:1200,priority:4,arousal:-.3,valence:.05,asymmetry:0,blink:.45,tilt:0,bounce:6},
  residual:{duration:650,priority:4,arousal:-.3,valence:-.25,asymmetry:.18,blink:.12,tilt:4,bounce:0},
  composure:{duration:900,priority:4,arousal:-.15,valence:-.08,asymmetry:0,blink:.65,tilt:6,bounce:2},
  resignation:{duration:1100,priority:4,arousal:-.35,valence:-.12,asymmetry:.05,blink:.55,tilt:0,bounce:7},
@@ -24,7 +26,7 @@ export class MicroExpressions {
  const moving=disturbance>.18,wasMoving=now-this.lastMotion<650;
  if(moving){if(this.recovering){this.recovering=false;this.recoveryQueue=[];this.active=undefined;this.next=0;this.lastTrigger=-Infinity}this.peak=Math.max(this.peak,anger);if(!wasMoving)this.trigger(anger>.4?'disapproval':'startle',now);else if(impacts>this.lastImpact&&now-this.lastTrigger>850)this.trigger('flinch',now);else if(now-this.lastTrigger>1800)this.trigger(anger>.4?'impatience':'suspicion',now);this.lastMotion=now}
  else if(Number.isFinite(this.lastMotion)&&now-this.lastMotion>=650){
- if(!this.recovering){this.recovering=true;this.recoveryQueue=this.peak>=.65?['residual','composure','resignation','cautious','relief','reengage']:this.peak>=.3?['composure','resignation','cautious','relief','reengage']:this.peak>=.15?['cautious','relief','reengage']:['relief'];this.next=Math.min(this.next,now);}
+ if(!this.recovering){this.recovering=true;this.recoveryQueue=this.peak>=.65?['residual','composure','exhausted','resignation','cautious','doubleSigh','relief','reengage']:this.peak>=.3?['composure','resignation','cautious','relief','reengage']:this.peak>=.15?['cautious','relief','reengage']:['relief'];this.next=Math.min(this.next,now);}
  const name=this.recoveryQueue[0];const eligible=name==='cautious'?anger<=.55:name==='relief'?anger<=.25:name==='reengage'?anger<=.06:true;
  if(name&&eligible&&!this.active&&now>=this.next&&this.trigger(name,now))this.recoveryQueue.shift();
  if(!this.recoveryQueue.length&&!this.active){this.recovering=false;this.peak=0;this.lastMotion=-Infinity}
