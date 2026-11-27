@@ -151,3 +151,5 @@ Enable orientation to activate inertial eye displacement from local device motio
 Physical motion now uses a separate normalized viewport translation channel, momentum, reflected wall collisions (restitution 0.72), impact-driven frustration and a weak centering spring during motion. Both renderers consume physical displacement independently of gaze. The eyes remain a paired rigid character, not independent particles.
 
 Motion diagnostics show sensor source, event count, acceleration magnitude and freshness. Gravity-inclusive acceleration is high-pass filtered when linear acceleration is unavailable or weak. Sudden acceleration changes inject immediate velocity impulses; depth-only jolts produce a vertical reaction. Use gentle movement, not violent shaking.
+
+Frustration is persistent: disturbance extends a 3.5–8 second quiet hold, followed by gradual decay at 0.055/s. Shake-off no longer clears anger; it rearms below 45%. Both SVG and WebGL display progressively red eyes, including the cinematic halo, while positive social expressions yield to frustration. Timing is initial tuning.

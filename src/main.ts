@@ -148,7 +148,8 @@ function frame(now:number){
  const personalityState=personality.step({people:fresh.length,smile:observed?.smile??0,brow:observed?.brow??0,voice:speech.probability,gesture:hand?.name},dt);
  const base=presets[select.value],auto=el<HTMLInputElement>('auto-emotes').checked,em=emotes.update(visible,now);
  const reaction=physical.step(now,dt);
- const w=auto&&!listening.active?em.weight*.5*(1-reaction.weight):0;
+ const anger=reaction.frustration;
+ const w=auto&&!listening.active?em.weight*.5*(1-reaction.weight)*(1-anger):0;
  const valence=clamp(base.valence+personalityState.valence*.45+(em.valence-base.valence)*w+(semanticIntent==='happy'?.3:0));
  const arousal=clamp(base.arousal+personalityState.arousal*.5+(em.arousal-base.arousal)*w);
  const asymmetry=clamp(base.asymmetry+personalityState.curiosity*.12+(em.asymmetry-base.asymmetry)*w);
@@ -161,13 +162,13 @@ function frame(now:number){
  const activeChanged=visible?.id!==undefined&&visible.id!==previousFocus;previousFocus=visible?.id??null;
  const motion=director.step({intention:behavioral,gazeChanged:activeChanged,hand:hand?.name,time:now,dt,listeningTilt:listening.tilt,listeningArousal:listening.arousal});
  eyes={
-  wink:smooth(eyes.wink??0,Math.max(motion.wink,w?em.wink:0),dt,6),
+  wink:smooth(eyes.wink??0,Math.max(motion.wink,w?em.wink:0)*(1-anger),dt,6),
   tilt:clamp((listening.active?motion.tilt:w?em.tilt:intention==='searching'?3:0)*(1-reaction.weight)+reaction.tilt,-25,25),
   bounce:smooth(eyes.bounce??0,motion.bounce+(w?em.bounce:0),dt,4),
   scale:smooth(eyes.scale??1,t?proximityScale(t.size):1,dt,2),
-  x:gazeX.step(intentX,dt),y:gazeY.step(intentY,dt),physicalX:reaction.x,physicalY:reaction.y,physicalWeight:reaction.weight,
-  valence:smooth(eyes.valence,clamp(valence-reaction.frustration*1.5),dt,5),
-  arousal:smooth(eyes.arousal,clamp(arousal+motion.arousal-reaction.frustration*.85),dt,4),
+  x:gazeX.step(intentX,dt),y:gazeY.step(intentY,dt),physicalX:reaction.x,physicalY:reaction.y,physicalWeight:reaction.weight,frustration:smooth(eyes.frustration??0,anger,dt,anger>(eyes.frustration??0)?5:1.5),
+  valence:smooth(eyes.valence,clamp(valence*(1-anger)-anger),dt,5),
+  arousal:smooth(eyes.arousal,clamp((arousal+motion.arousal)*(1-anger)-anger*.8),dt,4),
   asymmetry:smooth(eyes.asymmetry,asymmetry,dt,2),
   blink:Math.max(motion.blink,reaction.recovering?.25:0)
  };
