@@ -154,14 +154,14 @@ function frame(now:number){
   tilt:clamp((listening.active?motion.tilt:w?em.tilt:intention==='searching'?3:0)*(1-reaction.weight)+reaction.tilt,-25,25),
   bounce:smooth(eyes.bounce??0,motion.bounce+(w?em.bounce:0),dt,4),
   scale:smooth(eyes.scale??1,t?proximityScale(t.size):1,dt,2),
-  x:clamp(gazeX.step(intentX,dt)+reaction.x,-1.12,1.12),y:clamp(gazeY.step(intentY,dt)+reaction.y,-1.12,1.12),
+  x:gazeX.step(intentX,dt),y:gazeY.step(intentY,dt),physicalX:reaction.x,physicalY:reaction.y,physicalWeight:reaction.weight,
   valence:smooth(eyes.valence,clamp(valence-reaction.frustration*1.5),dt,5),
   arousal:smooth(eyes.arousal,clamp(arousal+motion.arousal-reaction.frustration*.85),dt,4),
   asymmetry:smooth(eyes.asymmetry,asymmetry,dt,2),
   blink:Math.max(motion.blink,reaction.recovering?.25:0)
  };
- renderer.render(compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity,velocityY:gazeY.velocity,orientationX:ox,orientationY:oy}));
- el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
+ renderer.render(compositor.compose(eyes,{time:now/1000,dt,velocityX:gazeX.velocity+reaction.vx,velocityY:gazeY.velocity+reaction.vy,orientationX:ox,orientationY:oy}));
+ el('status').textContent=message+'\nFaces: '+fresh.length+' | Focus: '+(visible?.id??'none')+' | Vision: '+vision.snapshot.mode+' | Audio: '+speech.source+' '+speech.probability.toFixed(2)+' | Gesture: '+(hand?.name??'none')+'\nIntention: '+intention+' | Affect: '+personalityState.valence.toFixed(2)+'/'+personalityState.arousal.toFixed(2)+'/'+personalityState.dominance.toFixed(2)+' | Impacts: '+reaction.impacts+' | Frustration: '+Math.round(reaction.frustration*100)+'%'+(reaction.recovering?' (shake-off)':'')+' | FPS: '+qualityFps.toFixed(0)+' | Renderer: '+renderer.activeMode;
  requestAnimationFrame(frame)
 }
 requestAnimationFrame(frame);

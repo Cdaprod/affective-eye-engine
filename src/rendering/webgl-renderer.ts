@@ -41,7 +41,7 @@ export class WebGLRenderer {
   this.renderer.setClearColor(0x020407,1);
   this.material=new THREE.ShaderMaterial({vertexShader,fragmentShader,depthTest:false,depthWrite:false,uniforms:{
    uResolution:{value:new THREE.Vector2(640,300)},uGaze:{value:new THREE.Vector2()},
-   uVelocity:{value:new THREE.Vector2()},uOrientation:{value:new THREE.Vector2()},
+   uPhysical:{value:new THREE.Vector2()},uPhysicalWeight:{value:0},uVelocity:{value:new THREE.Vector2()},uOrientation:{value:new THREE.Vector2()},
    uTime:{value:0},uProximity:{value:1},uValence:{value:0},uArousal:{value:0},
    uBlink:{value:0},uAsymmetry:{value:0},uWink:{value:0},uTilt:{value:0},
    uBounce:{value:0},uStretch:{value:0},uEmission:{value:1},uBloom:{value:.45},
@@ -82,6 +82,7 @@ export class WebGLRenderer {
   if(this.lost)return;
   const u=this.material.uniforms;
   u.uGaze.value.set(frame.x,frame.y);
+  u.uPhysical.value.set(frame.physicalX??0,frame.physicalY??0);u.uPhysicalWeight.value=frame.physicalWeight??0;
   u.uVelocity.value.set(frame.velocityX,frame.velocityY);
   u.uOrientation.value.set(frame.orientationX,frame.orientationY);
   u.uTime.value=frame.time;
