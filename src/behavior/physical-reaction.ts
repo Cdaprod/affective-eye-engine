@@ -2,15 +2,23 @@ import {clamp} from '../core';
 import {MoodEngine} from './mood';
 export class PhysicalReaction {
  readonly mood=new MoodEngine();private disturbance=0;private disturbanceAt=-Infinity;
- observeRotation(rate:number,now:number){if(Number.isFinite(rate)&&rate>35)this.observeDisturbance((rate-35)/100,now)}
- private observeDisturbance(strength:number,now:number){if(strength<.18)return;this.disturbance=Math.max(this.disturbance*Math.exp(-Math.max(0,now-this.disturbanceAt)/300),clamp(strength,0,1));this.disturbanceAt=now;this.mood.disturb(now,this.disturbance)}private armed=true;private impacts=0;private x=0;private y=0;private vx=0;private vy=0;private ax=0;private ay=0;private energy=0;private frustration=0;private at=-Infinity;private recovery=-Infinity;private cooldown=-Infinity;
+ private shakeAt=-Infinity;private shakeVector:[number,number,number]=[0,0,0];private reversals=0;private reversalAt=-Infinity;
+ observeRotation(_rate:number,_now:number){/* Orientation alone is not emotional provocation. */}
+ private observeDisturbance(strength:number,now:number){if(strength<.18)return;this.disturbance=Math.max(this.disturbance*Math.exp(-Math.max(0,now-this.disturbanceAt)/300),clamp(strength,0,1));this.disturbanceAt=now;if(this.reversals>=2&&now-this.reversalAt<450)this.mood.disturb(now,this.disturbance)}private armed=true;private impacts=0;private x=0;private y=0;private vx=0;private vy=0;private ax=0;private ay=0;private energy=0;private frustration=0;private at=-Infinity;private recovery=-Infinity;private cooldown=-Infinity;
  ingest(x:number,y:number,rotation:number,now:number,z=0){
   if(![x,y,rotation,now,z].every(Number.isFinite))return;
   const nx=clamp(x/9.81,-2,2),ny=clamp(y/9.81,-2,2);
   const impulseX=nx-this.ax,impulseY=ny-this.ay;
   const jolt=Math.max(Math.hypot(impulseX,impulseY),Math.abs(z)/9.81);
   const disturbance=Math.max(jolt,Math.max(0,Math.hypot(x,y,z)/9.81-.22)*.65,Math.max(0,Math.abs(rotation)/180-.25)*.6);
-  this.observeDisturbance(Math.max(disturbance,Math.max(0,Math.hypot(x,y,z)/7+Math.abs(rotation)/240-.22)),now);
+  const magnitude=Math.hypot(x,y,z);
+  if(now-this.shakeAt>650){this.reversals=0;this.shakeVector=[0,0,0]}
+  if(magnitude>3.2){
+   const [px,py,pz]=this.shakeVector;
+   if(x*px+y*py+z*pz<-.35*magnitude*Math.hypot(px,py,pz)&&now-this.reversalAt>65){this.reversals++;this.reversalAt=now}
+   this.shakeVector=[x,y,z];this.shakeAt=now;
+   if(this.reversals>=2&&now-this.reversalAt<450)this.observeDisturbance(clamp((magnitude-2)/6,0,1),now);
+  }
   if(Math.hypot(impulseX,impulseY)>.12){this.vx=clamp(this.vx-impulseX*18,-18,18);this.vy=clamp(this.vy+impulseY*18,-18,18)}
   if(Math.abs(z)>3&&Math.hypot(x,y)<2){this.vy=clamp(this.vy+Math.sign(z)*Math.min(8,Math.abs(z)*.6),-18,18)}
   this.ax=nx;this.ay=ny;
@@ -34,5 +42,5 @@ export class PhysicalReaction {
   }
   return {x:clamp(this.x+shake*.15),y:this.y,vx:this.vx,vy:this.vy,impacts:this.impacts,tilt:clamp(this.x*16+shake*18,-24,24),frustration:this.frustration,mood,disturbance:evidence,weight:clamp(Math.max(energy*1.5,Math.hypot(this.vx,this.vy)*.25,Math.hypot(this.x,this.y),recovering?1:0),0,1),recovering};
  }
- reset(){this.disturbance=0;this.disturbanceAt=-Infinity;this.mood.reset();this.armed=true;this.impacts=0;this.x=this.y=this.vx=this.vy=this.ax=this.ay=this.energy=this.frustration=0;this.at=this.recovery=this.cooldown=-Infinity}
+ reset(){this.shakeAt=this.reversalAt=-Infinity;this.reversals=0;this.shakeVector=[0,0,0];this.disturbance=0;this.disturbanceAt=-Infinity;this.mood.reset();this.armed=true;this.impacts=0;this.x=this.y=this.vx=this.vy=this.ax=this.ay=this.energy=this.frustration=0;this.at=this.recovery=this.cooldown=-Infinity}
 }
