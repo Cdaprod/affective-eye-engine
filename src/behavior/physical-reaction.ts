@@ -24,9 +24,9 @@ export class PhysicalReaction {
    this.vx=clamp(this.vx,-18,18);this.vy=clamp(this.vy,-18,18);
    this.x+=this.vx*h;this.y+=this.vy*h;
    if(Math.abs(this.x)>1){this.x=Math.sign(this.x)*(2-Math.abs(this.x));this.vx*=-.72;this.impacts++;this.frustration=clamp(this.frustration+.035,0,1);this.holdUntil=Math.max(this.holdUntil,now+3500+this.frustration*4500)}
-   if(Math.abs(this.y)>1){this.y=Math.sign(this.y)*(2-Math.abs(this.y));this.vy*=-.72;this.impacts++;this.frustration=clamp(this.frustration+.035,0,1)}
+   if(Math.abs(this.y)>1){this.y=Math.sign(this.y)*(2-Math.abs(this.y));this.vy*=-.72;this.impacts++;this.frustration=clamp(this.frustration+.035,0,1);this.holdUntil=Math.max(this.holdUntil,now+3500+this.frustration*4500)}
   }
-  return {x:clamp(this.x+shake*.15),y:this.y,vx:this.vx,vy:this.vy,impacts:this.impacts,tilt:clamp(this.x*16+shake*18,-24,24),frustration:this.frustration,weight:clamp(Math.max(energy*1.5,Math.hypot(this.vx,this.vy)*.25,Math.hypot(this.x,this.y),this.frustration,recovering?1:0),0,1),recovering};
+  return {x:clamp(this.x+shake*.15),y:this.y,vx:this.vx,vy:this.vy,impacts:this.impacts,tilt:clamp(this.x*16+shake*18,-24,24),frustration:this.frustration,weight:clamp(Math.max(energy*1.5,Math.hypot(this.vx,this.vy)*.25,Math.hypot(this.x,this.y),recovering?1:0),0,1),recovering};
  }
  reset(){this.holdUntil=-Infinity;this.armed=true;this.impacts=0;this.x=this.y=this.vx=this.vy=this.ax=this.ay=this.energy=this.frustration=0;this.at=this.recovery=this.cooldown=-Infinity}
 }

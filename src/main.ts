@@ -39,7 +39,7 @@ function deviceMotion(ev:DeviceMotionEvent){
   x=raw.x-gravity.x;y=raw.y-gravity.y;z=raw.z-gravity.z;motionSource='gravity-filtered';
  }
  if(a&&valid(a.x)&&valid(a.y)&&Math.hypot(a.x,a.y,a.z??0)>Math.hypot(x,y,z)*.8){x=a.x;y=a.y;z=a.z??0;motionSource='linear'}
- else if(!gravity)return;
+ else if(!gravity&&!(a&&valid(a.x)&&valid(a.y)))return;
  motionCount++;motionMagnitude=Math.hypot(x,y,z);
  const angle=(screen.orientation?.angle??Number((window as Window & {orientation?:number}).orientation??0))*Math.PI/180;
  physical.ingest(x*Math.cos(angle)+y*Math.sin(angle),-x*Math.sin(angle)+y*Math.cos(angle),Math.hypot(r?.alpha??0,r?.beta??0,r?.gamma??0),performance.now(),z);lastMotion=performance.now();
@@ -81,7 +81,7 @@ el('gestures').onclick=async()=>{
  if(!stream?.active){message='Enable camera before gestures';return}
  const token=generation;try{await hands.start();if(token!==generation){hands.close();return}handsOn=true;message='Hand gestures enabled'}catch(err){message='Hand gestures unavailable: '+String(err)}
 };
-el('motion').onclick=async()=>{try{const D=DeviceOrientationEvent as typeof DeviceOrientationEvent & {requestPermission?:()=>Promise<string>};const M=window.DeviceMotionEvent as typeof DeviceMotionEvent & {requestPermission?:()=>Promise<string>};const permissions=await Promise.all([D?.requestPermission?.()??Promise.resolve('granted'),M?.requestPermission?.()??Promise.resolve('granted')]);if(permissions.every(p=>p!=='granted'))throw Error('Motion permission denied');window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true;message='Physical interaction enabled'}catch(err){message=String(err)}};
+el('motion').onclick=async()=>{try{const D=window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {requestPermission?:()=>Promise<string>};const M=window.DeviceMotionEvent as typeof DeviceMotionEvent & {requestPermission?:()=>Promise<string>};const permissions=await Promise.allSettled([D?.requestPermission?.()??Promise.resolve(D?'granted':'unavailable'),M?.requestPermission?.()??Promise.resolve(M?'granted':'unavailable')]);if(!permissions.some(p=>p.status==='fulfilled'&&p.value==='granted'))throw Error('Motion permission denied');window.addEventListener('deviceorientation',orient);window.addEventListener('devicemotion',deviceMotion);orientation=true;message='Physical interaction enabled';el('motion').textContent='Motion enabled — tap to retry'}catch(err){message=String(err)}};
 el('sim').onclick=()=>{const enable=!sim;stop();sim=enable;message=sim?'Three-person simulation':'Manual mode'};
 const gazeX=new GazeSpring(),gazeY=new GazeSpring(),compositor=new AnimationCompositor();
 let last=performance.now(),eyes:Eyes={x:0,y:0,valence:0,arousal:0,blink:0,asymmetry:0};
