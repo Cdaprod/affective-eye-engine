@@ -66,10 +66,10 @@ void main(){
   // Screen-space analytical bloom: single pass on low-powered devices.
   float bloomRadius=max(2.0,min(res.x,res.y)*.075);
   float outer=exp(-pow(max(d,0.0)/bloomRadius,1.25))*saturate(uBloom);
-  float anger=saturate(uFrustration*2.5);
-  float warm=saturate(uFrustration*2.5);
-  float red=saturate(uFrustration*2.5-1.0);
-  vec3 halo=mix(mix(vec3(.015,.42,.63),vec3(.85,.27,.025),warm),vec3(.85,.015,.025),red)*outer*.30*uEmission;
+  float anger=saturate(uFrustration*2.0);
+  float warm=smoothstep(.2,.6,uFrustration);
+  float red=smoothstep(.65,.95,uFrustration);
+  vec3 halo=mix(mix(mix(vec3(.015,.42,.63),vec3(.35,.65,.32),saturate(uFrustration*4.0)),vec3(.85,.27,.025),warm),vec3(.85,.015,.025),red)*outer*.30*uEmission;
   color+=halo;
   float edge=clamp(.8+fwidth(d),1.0,3.0);
   float coverage=1.0-smoothstep(-edge,edge,d);
@@ -88,7 +88,7 @@ void main(){
   material*=max(.25,uEmission);
   // Subtle tactile glass rim and glint, not separate pupils or eyeballs.
   material+=vec3(.14,.42,.52)*smoothstep(-5.0,-.7,d)*rim*.28;
-  material=mix(material,mix(vec3(1.0,.38,.035),vec3(1.0,.018,.025),red)*(.65+.65*light)*max(.25,uEmission),anger);
+  material=mix(material,mix(mix(vec3(.55,.9,.65),vec3(1.0,.38,.035),warm),vec3(1.0,.018,.025),red)*(.65+.65*light)*max(.25,uEmission),anger);
   color=mix(color,material+halo*.35,coverage);
  }
  // Low-amplitude filmic grading; no grain (avoid noisy OLED animation).

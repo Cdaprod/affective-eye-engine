@@ -153,3 +153,6 @@ Physical motion now uses a separate normalized viewport translation channel, mom
 Motion diagnostics show sensor source, event count, acceleration magnitude and freshness. Gravity-inclusive acceleration is high-pass filtered when linear acceleration is unavailable or weak. Sudden acceleration changes inject immediate velocity impulses; depth-only jolts produce a vertical reaction. Use gentle movement, not violent shaking.
 
 Frustration is persistent: disturbance extends a 3.5–8 second quiet hold, followed by gradual decay at 0.055/s. Shake-off no longer clears anger; it rearms below 45%. Both SVG and WebGL display progressively red eyes, including the cinematic halo, while positive social expressions yield to frustration. Timing is initial tuning.
+
+## Mood progression
+The reusable `MoodEngine` and `moodLibrary` in `src/behavior/mood.ts` distinguish shake episodes separated by 650 ms of quiet. One episode is capped at 26% anger; repeated episodes escalate by 24 percentage points, with continuous decay at 8.5 points/s after quiet. Stage-specific procedural gestures and expression profiles feed the animation compositor independently of physical momentum. Full recovery takes about 12 seconds after quiet. These are initial tuning values.
