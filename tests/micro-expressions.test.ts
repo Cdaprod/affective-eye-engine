@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {MicroExpressions} from '../src/animation/micro-expressions.ts';
+const input={disturbance:0,impacts:0,anger:0,speech:false,focusChanged:false};
+test('motion onset produces short startle without persistent mood',()=>{const m=new MicroExpressions();m.step({...input,now:0,disturbance:.5});const s=m.step({...input,now:100,disturbance:.5});assert.equal(s.name,'startle');assert.ok(s.arousal>.3);assert.equal(m.step({...input,now:500}).name,'none')});
+test('speech onset acknowledges once',()=>{const m=new MicroExpressions();m.step({...input,now:0,speech:true});assert.equal(m.step({...input,now:100,speech:true}).name,'acknowledgment');assert.equal(m.step({...input,now:1000,speech:true}).name,'none')});
+test('higher priority flinch interrupts curiosity',()=>{const m=new MicroExpressions();assert.ok(m.trigger('curiosity',0));assert.ok(m.trigger('flinch',200));assert.equal(m.step({...input,now:260}).name,'flinch')});
+test('quiet after disturbance produces relief',()=>{const m=new MicroExpressions();m.step({...input,now:0,disturbance:.5});m.step({...input,now:200,disturbance:.5});assert.equal(m.step({...input,now:900}).name,'relief')});
